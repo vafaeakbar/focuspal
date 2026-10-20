@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Noto+Kufi+Arabic:wght@400&family=Pacifico&display=swap" rel="stylesheet">
   <!-- Bump ?v= on every release so browsers fetch the new files. -->
-  <link rel="stylesheet" href="css/styles.css?v=20261020n">
+  <link rel="stylesheet" href="css/styles.css?v=20261020o">
 </head>
 <body data-mode="focus">
   <canvas id="scene" aria-hidden="true"></canvas>
@@ -242,6 +242,11 @@
         <span><kbd>1–9</kbd> <kbd>0</kbd> travel to a place</span>
       </div>
 
+      <div class="dua-note">
+        <p>🤲 If FocusPal helps you focus, please remember my parents in your prayers.</p>
+        <p class="dua-ar" lang="ar" dir="rtl">إن نفعك هذا التطبيق، فلا تنسَ والديّ من دعائك</p>
+      </div>
+
       <div class="endorse">
         <img src="img/alajeer-symbol-dark.svg" alt="" width="20" height="21">
         <div>
@@ -306,16 +311,28 @@
     </div>
   </div>
 
+  <div class="dua-card" id="duaCard" role="dialog" aria-labelledby="duaTitle" hidden>
+    <span class="dua-icon" aria-hidden="true">🤲</span>
+    <div class="dua-text">
+      <p class="dua-title" id="duaTitle">A small request</p>
+      <p>If FocusPal helps you focus, please remember my parents in your prayers.</p>
+      <p class="dua-ar" lang="ar" dir="rtl">إن نفعك هذا التطبيق، فلا تنسَ والديّ من دعائك</p>
+    </div>
+    <button class="icon-btn small" id="duaClose" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20261020n"></script>
-  <script src="js/audio.js?v=20261020n"></script>
-  <script src="js/sounds.js?v=20261020n"></script>
-  <script src="js/scenes.js?v=20261020n"></script>
-  <script src="js/environments.js?v=20261020n"></script>
-  <script src="js/avatar.js?v=20261020n"></script>
-  <script src="js/premium.js?v=20261020n"></script>
-  <script src="js/map.js?v=20261020n"></script>
-  <script src="js/app.js?v=20261020n"></script>
+  <script src="js/config.js?v=20261020o"></script>
+  <script src="js/audio.js?v=20261020o"></script>
+  <script src="js/sounds.js?v=20261020o"></script>
+  <script src="js/scenes.js?v=20261020o"></script>
+  <script src="js/environments.js?v=20261020o"></script>
+  <script src="js/avatar.js?v=20261020o"></script>
+  <script src="js/premium.js?v=20261020o"></script>
+  <script src="js/map.js?v=20261020o"></script>
+  <script src="js/app.js?v=20261020o"></script>
 </body>
 </html>

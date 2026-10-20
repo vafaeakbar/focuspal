@@ -278,6 +278,7 @@
       const before = unlockedIds();
       addStats(1, Math.round(timer.total / 60));
       const fresh = unlockedIds().filter((id) => !before.includes(id));
+      if (!silent) maybeShowDua();
       if (fresh.length) {
         store.set('newPlaces', [...store.get('newPlaces', []), ...fresh]);
         if (!silent) {
@@ -902,6 +903,25 @@
       scheduleZen();
     }, { passive: true });
   });
+
+  // ---------- A gentle prayer request ----------
+  // Shown once, at the start of a break after the third completed focus session,
+  // so it never interrupts focus and only appears once the app has helped.
+  function maybeShowDua() {
+    if (store.get('duaShown', false) || lifetimeSessions() < 3) return;
+    store.set('duaShown', true);
+    setTimeout(() => {
+      const card = $('#duaCard');
+      card.hidden = false;
+      requestAnimationFrame(() => card.classList.add('show'));
+    }, 4500);
+  }
+  function closeDua() {
+    const card = $('#duaCard');
+    card.classList.remove('show');
+    setTimeout(() => { card.hidden = true; }, 500);
+  }
+  $('#duaClose').addEventListener('click', closeDua);
 
   // ---------- Night lighting ----------
   function applyNight() {

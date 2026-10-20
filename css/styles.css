@@ -494,6 +494,28 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 }
 .map-title .brand-mark { width: 34px; height: 34px; }
 
+/* A gentle request to remember the developer's parents in prayer. */
+.dua-note { margin-top: 22px; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.05); border: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.dua-note p { margin: 0; line-height: 1.55; }
+.dua-ar { font-family: "Noto Kufi Arabic", sans-serif; font-size: 14px; line-height: 1.9; margin-top: 4px !important; }
+.dua-card {
+  position: fixed; left: 50%; top: calc(74px + env(safe-area-inset-top, 0px)); z-index: 22;
+  width: min(440px, calc(100vw - 32px)); transform: translate(-50%, -8px); opacity: 0;
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 12px 14px 16px; border-radius: 18px;
+  background: var(--glass-strong); border: 1px solid var(--line);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 16px 40px rgba(0,0,0,.4);
+  transition: opacity .5s ease, transform .5s var(--ease);
+}
+.dua-card.show { opacity: 1; transform: translate(-50%, 0); }
+@media (min-width: 900px) {
+  .dua-card { left: auto; right: 20px; transform: translateY(-8px); }
+  .dua-card.show { transform: none; }
+}
+.dua-icon { font-size: 24px; line-height: 1.2; }
+.dua-text { flex: 1; min-width: 0; font-size: 14px; }
+.dua-text p { margin: 0; line-height: 1.5; }
+.dua-title { font-weight: 700; margin-bottom: 2px !important; }
+
 /* Product sign-off: Alajeer symbol + "by Alajeer", Arabic on its own line (brand book). */
 .endorse { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12.5px; }
 .endorse img { flex: 0 0 auto; }
