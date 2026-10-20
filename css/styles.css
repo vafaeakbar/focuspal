@@ -66,12 +66,9 @@ body.scene-dark .night-btn { color: #c9d4ff; }
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -0.01em; text-shadow: 0 1px 12px rgba(0,0,0,.4); }
 .brand-mark {
-  width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
-  background: var(--accent); color: var(--accent-ink);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent);
-  transition: background .6s;
+  width: 32px; height: 32px; border-radius: 9px; display: block; flex: 0 0 auto;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
 }
-.brand-mark svg { width: 20px; height: 20px; stroke-width: 2.4; }
 .today {
   font-size: 13px; color: var(--muted);
   padding: 7px 13px; border-radius: 999px;
@@ -495,7 +492,20 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 36px rgba(0, 40, 70, .25);
 }
-.map-title .brand-mark { width: 34px; height: 34px; flex: 0 0 auto; }
+.map-title .brand-mark { width: 34px; height: 34px; }
+
+/* Product sign-off: Alajeer symbol + "by Alajeer", Arabic on its own line (brand book). */
+.endorse { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12.5px; }
+.endorse img { flex: 0 0 auto; }
+.endorse p { margin: 0; line-height: 1.5; }
+.endorse-ar { font-family: "Noto Kufi Arabic", sans-serif; font-size: 13.5px; line-height: 1.8; }
+.map-endorse {
+  position: absolute; right: 14px; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 2;
+  display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 8px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 600; color: rgba(246, 244, 239, .85);
+  background: rgba(16, 32, 44, .5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+}
 .map-title-text { min-width: 0; display: grid; gap: 4px; }
 .map-title h1 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
 .map-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }

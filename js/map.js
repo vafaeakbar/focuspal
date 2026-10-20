@@ -270,13 +270,13 @@
         <path d="M44 -112 h24 M44 -100 h24 M44 -88 h24 M44 -76 h24 M44 -64 h24 M44 -52 h24" stroke="#fff" stroke-width="2"/>
         <rect x="-42" y="-194" width="84" height="160" fill="url(#glass)" stroke="#2f3b4a" stroke-width="3"/>
         ${fins}
-        <rect x="-42" y="-184" width="84" height="18" fill="${b.color}"/>
+        <rect x="-42" y="-184" width="84" height="18" fill="${b.color}"/><rect x="-42" y="-167" width="84" height="2.5" fill="${b.accent}"/>
         <text x="0" y="-170" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">${b.name}</text>
         <path d="M-10 -194 V-208" stroke="#2f3b4a" stroke-width="2.5"/><circle class="blink" cx="-10" cy="-210" r="3.5" fill="#ff4d4d"/>
         <rect x="-74" y="-36" width="148" height="36" fill="#eef2f6" stroke="#2f3b4a" stroke-width="3"/>
         <rect x="-64" y="-28" width="128" height="20" fill="url(#glass)"/>
         <rect x="-10" y="-20" width="20" height="20" fill="#2f3b4a"/>
-        <rect x="-74" y="-40" width="148" height="5" fill="${b.color}"/>`;
+        <rect x="-74" y="-40" width="148" height="5" fill="${b.accent}"/>`;
     },
     space: () => `<ellipse cx="0" cy="2" rx="62" ry="15" fill="#b9c0c7" stroke="#8a939c" stroke-width="3"/>
         <ellipse cx="0" cy="-1" rx="34" ry="7" fill="#9aa3ab"/>

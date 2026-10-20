@@ -2515,6 +2515,10 @@
   // ======================================================================
   // ALAJEER HQ
   // ======================================================================
+  // The official logo for the HQ wall; the name is drawn as text until it loads.
+  const brandLogo = new Image();
+  brandLogo.src = FP.config.brand.logo;
+
   scenes.alajeer = (w, h, dpr) => {
     const brand = FP.config.brand;
     const winTop = h * 0.1;
@@ -2522,6 +2526,9 @@
     const winBot = h * 0.7;
     const deskY = h * 0.85;
     const wallW = Math.max(150, w * 0.22);
+    // Stacked lockup is 1225 × 1956.
+    const logoW = Math.min(wallW * 0.66, 220);
+    const logo = { w: logoW, h: logoW * (1956 / 1225), x: (wallW - logoW) / 2, y: h * 0.14 };
     const towerX = w * 0.82;
     const turbines = [0.36, 0.52, 0.68].map((k) => ({ y: horizon - h * 0.26 * k, a: rand(0, TAU) }));
     const dhows = Array.from({ length: 2 }, () => ({ x: rand(wallW, w), y: rand(horizon + 12, winBot - 20), v: rand(4, 8) * (Math.random() < 0.5 ? 1 : -1), s: rand(0.7, 1.1) }));
@@ -2599,23 +2606,16 @@
         c.fillStyle = '#1b1e26';
         c.fillRect(dx - 3, winBot + 26, 6, 6);
       }
-      // brand wall: dark slats with a backlit name and motto
-      c.fillStyle = '#12141b';
+      // brand wall: Ink slats (the logo's dark-mode ground), a copper edge, the logo (drawn live) and the motto
+      c.fillStyle = '#14181F';
       c.fillRect(0, 0, wallW, deskY);
-      c.fillStyle = 'rgba(255,255,255,0.03)';
+      c.fillStyle = 'rgba(242,237,227,0.03)';
       for (let x = 8; x < wallW; x += 16) c.fillRect(x, 0, 6, deskY);
-      c.fillStyle = brand.color;
-      c.fillRect(wallW - 6, 0, 6, deskY);
+      c.fillStyle = brand.accent;
+      c.fillRect(wallW - 5, 0, 5, deskY);
+      glow(c, wallW / 2, logo.y + logo.h * 0.45, logo.w * 0.9, 'rgba(184,115,51,A)', 0.18);
       const size = Math.max(26, Math.min(54, wallW * 0.2));
-      c.save();
-      c.shadowColor = brand.color;
-      c.shadowBlur = 24;
-      c.fillStyle = '#ffffff';
-      c.font = `800 ${size}px Inter, sans-serif`;
-      c.textAlign = 'center';
-      c.fillText(brand.name, wallW / 2, h * 0.36);
-      c.restore();
-      c.fillStyle = 'rgba(255,255,255,0.7)';
+      c.fillStyle = 'rgba(242,237,227,0.72)';
       c.font = `600 ${Math.max(9, size * 0.22)}px Inter, sans-serif`;
       c.textAlign = 'center';
       const words = brand.motto.toUpperCase().split(' ');
@@ -2626,7 +2626,7 @@
         if (c.measureText(test).width > wallW * 0.8) { lines.push(line); line = wd; } else line = test;
       });
       lines.push(line);
-      lines.forEach((ln, i) => c.fillText(ln, wallW / 2, h * 0.36 + size * 0.7 + i * size * 0.34));
+      lines.forEach((ln, i) => c.fillText(ln, wallW / 2, logo.y + logo.h + 22 + i * size * 0.34));
       c.textAlign = 'left';
       // plant at the base of the wall
       c.fillStyle = '#e8e3da';
@@ -2673,7 +2673,7 @@
       c.fillStyle = '#ffffff';
       roundRect(c, mx - 24, deskY - 40, 48, 54, 8);
       c.fill();
-      c.fillStyle = brand.color;
+      c.fillStyle = brand.accent;
       c.fillRect(mx - 24, deskY - 22, 48, 12);
       c.strokeStyle = '#ffffff';
       c.lineWidth = 6;
@@ -2728,6 +2728,15 @@
           c.restore();
         });
         c.drawImage(inside, 0, 0, w, h);
+        if (brandLogo.complete && brandLogo.naturalWidth) {
+          c.drawImage(brandLogo, logo.x, logo.y, logo.w, logo.h);
+        } else {
+          c.fillStyle = '#F2EDE3';
+          c.font = `800 ${Math.max(24, logo.w * 0.24)}px Inter, sans-serif`;
+          c.textAlign = 'center';
+          c.fillText(brand.name, wallW / 2, logo.y + logo.h * 0.6);
+          c.textAlign = 'left';
+        }
         // a softly updating chart on the team monitors
         for (let dx = wallW + 90; dx < w - 60; dx += 260) {
           c.strokeStyle = 'rgba(127,176,255,0.9)';

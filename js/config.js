@@ -7,11 +7,14 @@
   FP.config = {
     // false: every place is open to everyone. true: places unlock with focus sessions (or Premium).
     lockPlaces: false,
-    // Shown on the AlAjeer HQ brand wall, mug and map tower. Set `color` to your brand colour.
+    // Alajeer corporate identity (see the alajeer-brand repo), used by the Alajeer HQ place and the sign-off.
     brand: {
-      name: 'AlAjeer',
+      name: 'Alajeer',
       motto: 'Transforming Business Through Technology',
-      color: '#5b7cfa',
+      color: '#1E3A2B', // Forest
+      accent: '#B87333', // Copper
+      logo: 'img/alajeer-stacked-dark.svg', // dark-mode stacked lockup, for the HQ wall
+      symbol: 'img/alajeer-symbol-dark.svg', // for the "by Alajeer" sign-off
     },
     premium: {
       // Placeholder prices: replace with your own.

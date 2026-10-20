@@ -128,7 +128,7 @@
       ],
     },
     {
-      id: 'alajeer', name: 'AlAjeer HQ', emoji: '🏢', accent: FP.config.brand.color, scene: 'alajeer', unlock: 0,
+      id: 'alajeer', name: 'Alajeer HQ', emoji: '🏢', accent: FP.config.brand.accent, scene: 'alajeer', unlock: 0,
       tagline: 'A calm, modern office looking out over the skyline at sunset. Home of the team behind FocusPal.',
       layers: [
         { id: 'hvac', name: 'Air conditioning', vol: 0.45, gain: 0.65, create: (k, o) => S.hvac(k, o) },

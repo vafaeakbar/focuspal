@@ -1,0 +1,14 @@
+{
+  "name": "FocusPal",
+  "short_name": "FocusPal",
+  "description": "A focus timer on an illustrated island: pick a place, choose a study rhythm, and work inside a calm scene and soundscape.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#24305E",
+  "theme_color": "#24305E",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
