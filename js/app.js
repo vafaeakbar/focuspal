@@ -905,11 +905,17 @@
   });
 
   // ---------- A gentle prayer request ----------
-  // Shown once, at the start of a break after the third completed focus session,
-  // so it never interrupts focus and only appears once the app has helped.
+  // Shown at the start of a break (never during focus) after the 3rd completed
+  // focus session, and once more after the 30th. Each milestone shows at most once.
+  const DUA_MILESTONES = [3, 30];
   function maybeShowDua() {
-    if (store.get('duaShown', false) || lifetimeSessions() < 3) return;
-    store.set('duaShown', true);
+    const done = lifetimeSessions();
+    // Earlier versions stored a single flag for the first milestone.
+    const seen = store.get('duaSeen', store.get('duaShown', false) ? [3] : []);
+    const due = DUA_MILESTONES.filter((m) => done >= m && !seen.includes(m));
+    if (!due.length) return;
+    // Passing several milestones at once still shows the card only once.
+    store.set('duaSeen', [...seen, ...due]);
     setTimeout(() => {
       const card = $('#duaCard');
       card.hidden = false;
