@@ -43,6 +43,6 @@ The Premium flag is stored in the browser, so a determined user could switch it 
 
 ## Brand
 FocusPal is an Alajeer product, following the house rules in the `alajeer-brand` repo:
-- **Icon:** its own colour (twilight blue `#24305E`), an ivory map pin whose head is a focus ring, and an amber accent. Like every product icon, it carries no Alajeer marks.
+- **Icon:** the study lamp: its own colour (twilight blue `#24305E`), an ivory pendant lamp casting a soft warm beam, and an amber bulb as the accent. Like every product icon, it carries no Alajeer marks.
 - **Sign-off:** the Alajeer symbol with "by Alajeer", and «من الأجير» on its own line (in the Timer panel and on the map).
 - **Alajeer HQ** uses the official dark-mode stacked logo, Forest `#1E3A2B` and Copper `#B87333`.
