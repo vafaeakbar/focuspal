@@ -46,4 +46,4 @@ FocusPal is an Alajeer product, following the house rules in the `alajeer-brand`
 - **Icon:** the study lamp: its own colour (twilight blue `#24305E`), an ivory pendant lamp casting a soft warm beam, and an amber bulb as the accent. Like every product icon, it carries no Alajeer marks.
 - **Prayer request:** after a user's 3rd completed focus session, and once more after the 30th (plus once on Fridays when the app opens), a card asks them to remember the developer's parents in their prayers (English and Arabic). The same line stays in the Timer panel.
 - **Sign-off:** the Alajeer symbol with "by Alajeer", and «من الأجير» on its own line (in the Timer panel and on the map).
-- **Alajeer HQ** uses the official dark-mode stacked logo, Forest `#1E3A2B` and Copper `#B87333`.
+- **Alajeer HQ** uses the official dark-mode stacked logo, Forest `#1E3A2B` and Copper `#B87333`, and the brand tagline "Built in Bahrain, for Bahrain." with «صُنع في البحرين، للبحرين» on its own line.

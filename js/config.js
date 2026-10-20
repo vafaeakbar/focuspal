@@ -10,7 +10,9 @@
     // Alajeer corporate identity (see the alajeer-brand repo), used by the Alajeer HQ place and the sign-off.
     brand: {
       name: 'Alajeer',
-      motto: 'Transforming Business Through Technology',
+      // Brand-book tagline; English and Arabic always sit on separate lines.
+      tagline: 'Built in Bahrain, for Bahrain.',
+      taglineAr: 'صُنع في البحرين، للبحرين',
       color: '#1E3A2B', // Forest
       accent: '#B87333', // Copper
       logo: 'img/alajeer-stacked-dark.svg', // dark-mode stacked lockup, for the HQ wall

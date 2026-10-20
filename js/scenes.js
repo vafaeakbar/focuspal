@@ -2518,6 +2518,8 @@
   // The official logo for the HQ wall; the name is drawn as text until it loads.
   const brandLogo = new Image();
   brandLogo.src = FP.config.brand.logo;
+  // Make sure the Arabic tagline gets its brand typeface rather than a system fallback.
+  if (document.fonts && document.fonts.load) document.fonts.load('400 16px "Noto Kufi Arabic"').catch(() => {});
 
   scenes.alajeer = (w, h, dpr) => {
     const brand = FP.config.brand;
@@ -2529,6 +2531,8 @@
     // Stacked lockup is 1225 × 1956.
     const logoW = Math.min(wallW * 0.66, 220);
     const logo = { w: logoW, h: logoW * (1956 / 1225), x: (wallW - logoW) / 2, y: h * 0.14 };
+    // The Arabic tagline is drawn live (below the English) so it picks up the web font once loaded.
+    const taglineAr = { y: 0, size: 14 };
     const towerX = w * 0.82;
     const turbines = [0.36, 0.52, 0.68].map((k) => ({ y: horizon - h * 0.26 * k, a: rand(0, TAU) }));
     const dhows = Array.from({ length: 2 }, () => ({ x: rand(wallW, w), y: rand(horizon + 12, winBot - 20), v: rand(4, 8) * (Math.random() < 0.5 ? 1 : -1), s: rand(0.7, 1.1) }));
@@ -2606,7 +2610,7 @@
         c.fillStyle = '#1b1e26';
         c.fillRect(dx - 3, winBot + 26, 6, 6);
       }
-      // brand wall: Ink slats (the logo's dark-mode ground), a copper edge, the logo (drawn live) and the motto
+      // brand wall: Ink slats (the logo's dark-mode ground), a copper edge, the logo (drawn live) and the tagline
       c.fillStyle = '#14181F';
       c.fillRect(0, 0, wallW, deskY);
       c.fillStyle = 'rgba(242,237,227,0.03)';
@@ -2615,10 +2619,10 @@
       c.fillRect(wallW - 5, 0, 5, deskY);
       glow(c, wallW / 2, logo.y + logo.h * 0.45, logo.w * 0.9, 'rgba(184,115,51,A)', 0.18);
       const size = Math.max(26, Math.min(54, wallW * 0.2));
-      c.fillStyle = 'rgba(242,237,227,0.72)';
-      c.font = `600 ${Math.max(9, size * 0.22)}px Inter, sans-serif`;
+      c.fillStyle = 'rgba(242,237,227,0.78)';
+      c.font = `500 ${Math.max(11, size * 0.27)}px Inter, sans-serif`;
       c.textAlign = 'center';
-      const words = brand.motto.toUpperCase().split(' ');
+      const words = brand.tagline.split(' ');
       const lines = [];
       let line = '';
       words.forEach((wd) => {
@@ -2626,7 +2630,10 @@
         if (c.measureText(test).width > wallW * 0.8) { lines.push(line); line = wd; } else line = test;
       });
       lines.push(line);
-      lines.forEach((ln, i) => c.fillText(ln, wallW / 2, logo.y + logo.h + 22 + i * size * 0.34));
+      const lineH = Math.max(15, size * 0.38);
+      lines.forEach((ln, i) => c.fillText(ln, wallW / 2, logo.y + logo.h + 24 + i * lineH));
+      taglineAr.y = logo.y + logo.h + 24 + lines.length * lineH + 6;
+      taglineAr.size = Math.max(12, size * 0.31);
       c.textAlign = 'left';
       // plant at the base of the wall
       c.fillStyle = '#e8e3da';
@@ -2737,6 +2744,13 @@
           c.fillText(brand.name, wallW / 2, logo.y + logo.h * 0.6);
           c.textAlign = 'left';
         }
+        c.fillStyle = 'rgba(242,237,227,0.78)';
+        c.font = `400 ${taglineAr.size}px "Noto Kufi Arabic", sans-serif`;
+        c.textAlign = 'center';
+        c.direction = 'rtl';
+        c.fillText(brand.taglineAr, wallW / 2, taglineAr.y);
+        c.direction = 'ltr';
+        c.textAlign = 'left';
         // a softly updating chart on the team monitors
         for (let dx = wallW + 90; dx < w - 60; dx += 260) {
           c.strokeStyle = 'rgba(127,176,255,0.9)';
