@@ -1,0 +1,607 @@
+/*
+ * Procedural sound builders. Each builder is `(kit, out, options) => void`
+ * and wires a self-running soundscape into `out`.
+ */
+(function () {
+  'use strict';
+  const FP = window.FP;
+  const { rand, pick, mtof } = FP;
+  const S = (FP.sounds = {});
+
+  // ---------- Beds & textures ----------
+
+  S.roomTone = (k, out, { lp = 300, level = 0.5, air = 0.05 } = {}) => {
+    const g = k.gain(level);
+    k.chain(k.noise('brown'), k.filter('lowpass', lp), g, out);
+    k.lfo(g.gain, 0.05, level * 0.12);
+    if (air) k.chain(k.noise('pink'), k.filter('bandpass', 900, 0.5), k.gain(air), out);
+  };
+
+  S.hvac = (k, out) => {
+    k.chain(k.noise('brown'), k.filter('lowpass', 450), k.gain(0.55), out);
+    k.chain(k.noise('pink'), k.filter('bandpass', 1100, 0.6), k.gain(0.06), out);
+    k.chain(k.osc('sine', 120), k.gain(0.01), out);
+    k.chain(k.osc('sine', 240), k.gain(0.003), out);
+  };
+
+  S.wind = (k, out, { lo = 300, hi = 1100, Q = 0.7, level = 1, rate = 0.06, filter = 'lowpass', type = 'pink' } = {}) => {
+    const mid = (lo + hi) / 2;
+    const f = k.filter(filter, mid, Q);
+    const g = k.gain(level * 0.6);
+    k.chain(k.noise(type), f, g, out);
+    k.lfo(f.frequency, rate, (hi - lo) / 2);
+    k.lfo(g.gain, rate * 1.37, level * 0.3);
+    k.every(5000, 12000, () => {
+      const t = k.now();
+      f.frequency.setTargetAtTime(hi * rand(0.9, 1.3), t, 1.2);
+      f.frequency.setTargetAtTime(mid, t + rand(2, 4), 1.6);
+    });
+  };
+
+  S.rain = (k, out, { intensity = 1, lp = 7000, drops = true } = {}) => {
+    const bus = k.gain(1);
+    bus.connect(out);
+    k.chain(k.noise('pink'), k.filter('highpass', 400), k.filter('lowpass', lp, 0.5), k.gain(0.55 * intensity), bus);
+    k.chain(k.noise('white'), k.filter('bandpass', 2800, 0.4), k.gain(0.1 * intensity), bus);
+    k.chain(k.noise('brown'), k.filter('lowpass', 250), k.gain(0.25 * intensity), bus);
+    if (drops) {
+      k.every(15, 60, () => k.burst({
+        decay: rand(0.005, 0.02), gain: rand(0.02, 0.07) * intensity,
+        filter: 'bandpass', freq: rand(1500, Math.min(6000, lp)), Q: 2, pan: rand(-1, 1), dest: bus,
+      }));
+    }
+  };
+
+  S.windowDrops = (k, out) => {
+    k.every(120, 900, () => {
+      const f = rand(700, 1800);
+      const p = rand(-0.8, 0.8);
+      k.tone({ freq: f * 1.6, to: f, glide: 0.03, attack: 0.001, decay: rand(0.03, 0.08), gain: rand(0.02, 0.06), pan: p });
+      k.burst({ decay: 0.012, gain: rand(0.03, 0.08), filter: 'bandpass', freq: f * 2, Q: 3, pan: p });
+    });
+    // A gutter drip that keeps a slow, irregular rhythm.
+    k.every(900, 1600, () => {
+      const f = rand(1000, 1200);
+      k.tone({ freq: f * 1.4, to: f, glide: 0.02, attack: 0.001, decay: 0.09, gain: 0.05, pan: 0.6 });
+    });
+  };
+
+  S.thunder = (k, out) => {
+    const strike = () => {
+      if (out.gain.value < 0.02) return;
+      const delay = rand(0.5, 3);
+      FP.emit('thunder', { delay });
+      const dur = rand(5, 9);
+      const t = k.now() + delay;
+      const src = k.noiseSource('brown');
+      const lp = k.filter('lowpass', rand(140, 260), 0.8);
+      const g = k.gain(0);
+      src.connect(lp).connect(g).connect(out);
+      const peak = rand(0.5, 1);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(peak, t + rand(0.08, 0.6));
+      for (let tt = t + 0.6; tt < t + dur - 1; tt += rand(0.25, 0.8)) {
+        g.gain.linearRampToValueAtTime(peak * rand(0.3, 0.95), tt);
+      }
+      g.gain.linearRampToValueAtTime(0, t + dur);
+      lp.frequency.setTargetAtTime(90, t + 1, dur / 3);
+      src.start(t, rand(0, 4));
+      src.stop(t + dur + 0.1);
+      if (delay < 1.2) {
+        k.burst({ type: 'white', when: delay, attack: 0.004, decay: 0.7, gain: 0.25, filter: 'lowpass', freq: 2000, to: 250 });
+      }
+    };
+    k.every(25000, 65000, strike, 7000);
+  };
+
+  S.water = (k, out, { bubbles = true, lp = 4000, level = 1 } = {}) => {
+    const bus = k.gain(level);
+    bus.connect(out);
+    k.chain(k.noise('pink'), k.filter('lowpass', lp, 0.5), k.gain(0.35), bus);
+    const bp = k.filter('bandpass', 1400, 0.8);
+    k.chain(k.noise('white'), bp, k.gain(0.12), bus);
+    k.lfo(bp.frequency, 0.3, 300);
+    if (bubbles) {
+      k.every(15, 70, () => {
+        const f = rand(500, 1600);
+        k.tone({ freq: f, to: f * rand(1.4, 2.2), glide: 0.03, attack: 0.002, decay: rand(0.02, 0.05), gain: rand(0.01, 0.035), pan: rand(-0.6, 0.6), dest: bus });
+      });
+    }
+  };
+
+  S.waves = (k, out) => {
+    const bus = k.gain(1);
+    bus.connect(out);
+    k.chain(k.noise('brown'), k.filter('lowpass', 350), k.gain(0.35), bus);
+    const wave = () => {
+      const t = k.now();
+      const rise = rand(2, 3.5);
+      const fall = rand(3.5, 6);
+      const peak = rand(0.35, 0.7);
+      const src = k.noiseSource('pink');
+      const f = k.filter('lowpass', 300, 0.5);
+      const g = k.gain(0);
+      src.connect(f).connect(g).connect(k.pan(rand(-0.4, 0.4))).connect(bus);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(peak, t + rise);
+      g.gain.setTargetAtTime(0, t + rise, fall / 3.5);
+      f.frequency.setValueAtTime(300, t);
+      f.frequency.exponentialRampToValueAtTime(rand(2000, 3500), t + rise);
+      f.frequency.exponentialRampToValueAtTime(400, t + rise + fall);
+      src.start(t, rand(0, 4));
+      src.stop(t + rise + fall + 1.5);
+      // Foam fizzing as the wave breaks and draws back.
+      k.burst({ when: rise * 0.85, attack: 0.4, decay: fall * 0.8, gain: peak * 0.12, filter: 'highpass', freq: 3500, dest: bus });
+    };
+    k.every(5500, 9500, wave, 200);
+  };
+
+  S.fire = (k, out) => {
+    const bus = k.gain(1);
+    bus.connect(out);
+    const roarF = k.filter('lowpass', 500, 0.6);
+    const roar = k.gain(0.4);
+    k.chain(k.noise('brown'), roarF, roar, bus);
+    k.lfo(roar.gain, 0.3, 0.12);
+    k.lfo(roarF.frequency, 0.17, 150);
+    k.chain(k.noise('pink'), k.filter('bandpass', 1200, 0.5), k.gain(0.04), bus);
+    k.every(30, 350, () => {
+      const n = Math.random() < 0.3 ? Math.floor(rand(2, 6)) : 1;
+      let w = 0;
+      for (let i = 0; i < n; i++) {
+        k.burst({
+          when: w, attack: 0.0005, decay: rand(0.003, 0.02),
+          gain: Math.pow(Math.random(), 2.5) * 0.45 + 0.02,
+          filter: Math.random() < 0.5 ? 'highpass' : 'bandpass', freq: rand(1200, 5000), Q: rand(0.5, 2),
+          pan: rand(-0.5, 0.5), dest: bus,
+        });
+        w += rand(0.005, 0.05);
+      }
+    });
+    k.every(3000, 9000, () => k.burst({ attack: 0.001, decay: 0.08, gain: 0.3, filter: 'bandpass', freq: rand(400, 900), Q: 1.5, pan: rand(-0.4, 0.4), dest: bus }));
+  };
+
+  S.sizzle = (k, out) => {
+    const g = k.gain(0.12);
+    k.chain(k.noise('white'), k.filter('highpass', 2500), k.filter('lowpass', 9000), g, out);
+    k.lfo(g.gain, 0.13, 0.05);
+    k.every(10, 60, () => k.burst({ attack: 0.0005, decay: rand(0.002, 0.01), gain: rand(0.01, 0.07), filter: 'highpass', freq: rand(3000, 7000), pan: rand(-0.4, 0.4) }));
+    // A fresh order hits the grill.
+    k.every(9000, 22000, () => k.burst({ attack: 0.05, hold: rand(1, 2), decay: 1.6, gain: 0.12, filter: 'highpass', freq: 2000 }));
+  };
+
+  // ---------- People ----------
+
+  // Real crowd recordings (public domain), looped seamlessly. Optional filters push
+  // the crowd further away; if the recording can't load, a soft murmur bed stands in.
+  S.crowd = (k, out, { sample, lp, hp, level = 1 } = {}) => {
+    const g = k.gain(level);
+    const nodes = [g];
+    if (hp) nodes.push(k.filter('highpass', hp));
+    if (lp) nodes.push(k.filter('lowpass', lp, 0.6));
+    nodes.push(out);
+    k.chain(...nodes);
+    k.loop(sample, { dest: g, onError: () => murmur(k, g) });
+  };
+
+  const murmur = (k, out) => {
+    const bp = k.filter('bandpass', 500, 0.7);
+    const g = k.gain(0.25);
+    k.chain(k.noise('pink'), bp, k.filter('lowpass', 1400), g, out);
+    k.lfo(g.gain, 0.23, 0.06);
+    k.lfo(bp.frequency, 0.11, 120);
+  };
+
+  S.typing = (k, out, { typists = 2 } = {}) => {
+    const people = Array.from({ length: typists }, () => ({ pan: rand(-0.8, 0.8), tone: rand(0.8, 1.2), level: rand(0.4, 1) }));
+    k.every(2500, 9000, () => {
+      const p = pick(people);
+      const n = Math.floor(rand(8, 45));
+      let w = 0;
+      for (let i = 0; i < n; i++) {
+        const space = Math.random() < 0.17;
+        k.burst({ when: w, attack: 0.001, decay: space ? 0.03 : rand(0.012, 0.022), gain: p.level * rand(0.08, 0.16), filter: 'bandpass', freq: (space ? 1600 : rand(2600, 4200)) * p.tone, Q: 1.4, pan: p.pan });
+        k.tone({ freq: (space ? 180 : rand(320, 480)) * p.tone, when: w, attack: 0.001, decay: 0.03, gain: p.level * 0.04, pan: p.pan });
+        w += Math.random() < 0.08 ? rand(0.3, 0.8) : rand(0.07, 0.19);
+      }
+      if (Math.random() < 0.4) {
+        k.burst({ when: w + rand(0.3, 1), decay: 0.008, gain: p.level * 0.1, filter: 'bandpass', freq: 5000, Q: 2, pan: p.pan });
+      }
+    });
+  };
+
+  S.footsteps = (k, out) => {
+    k.every(18000, 45000, () => {
+      const n = Math.floor(rand(5, 10));
+      const from = Math.random() < 0.5 ? -0.9 : 0.9;
+      const step = rand(0.5, 0.62);
+      for (let i = 0; i < n; i++) {
+        const x = i / (n - 1);
+        const pan = from - 2 * from * x;
+        const level = Math.max(0.15, Math.sin(Math.PI * (0.1 + 0.8 * x)));
+        k.tone({ freq: rand(80, 110), to: 50, glide: 0.1, when: i * step, attack: 0.002, decay: 0.12, gain: 0.12 * level, pan });
+        k.burst({ type: 'pink', when: i * step + 0.005, attack: 0.002, decay: 0.05, gain: 0.05 * level, filter: 'lowpass', freq: 900, pan });
+      }
+    }, 9000);
+  };
+
+  // ---------- Objects ----------
+
+  const clink = (k, dest, { lo = 1800, hi = 3600, gain = 0.08, when = 0 } = {}) => {
+    const f = rand(lo, hi);
+    const p = rand(-0.7, 0.7);
+    const g = gain * rand(0.4, 1);
+    [[1, 1, 0.5], [2.76, 0.5, 0.3], [5.4, 0.25, 0.18], [8.9, 0.1, 0.1]].forEach(([m, a, d]) => {
+      if (f * m > 18000) return;
+      k.tone({ freq: f * m, when, gain: g * a, attack: 0.001, decay: d * rand(0.6, 1.2), pan: p, dest });
+    });
+  };
+
+  S.dishes = (k, out, { lo = 1800, hi = 3600, min = 1500, max = 6000 } = {}) => {
+    k.every(min, max, () => {
+      clink(k, out, { lo, hi });
+      if (Math.random() < 0.35) clink(k, out, { lo, hi, when: rand(0.08, 0.3) });
+      // Spoon stirring a cup.
+      if (Math.random() < 0.12) {
+        const f = rand(3800, 4600);
+        for (let i = 0; i < 8; i++) k.tone({ freq: f * rand(0.97, 1.03), when: 0.6 + i * rand(0.11, 0.15), attack: 0.001, decay: 0.08, gain: 0.025, pan: 0.3 });
+      }
+    });
+  };
+
+  S.espresso = (k, out) => {
+    k.every(22000, 50000, () => {
+      const p = rand(-0.5, 0.5);
+      if (Math.random() < 0.5) {
+        const d = rand(3, 6);
+        k.burst({ attack: 0.3, hold: d, decay: 0.6, gain: 0.07, filter: 'bandpass', freq: 5200, Q: 0.8, to: 3800, pan: p });
+        k.burst({ type: 'pink', attack: 0.5, hold: d, decay: 0.5, gain: 0.06, filter: 'bandpass', freq: 900, Q: 2, pan: p });
+      } else {
+        const d = rand(2.5, 4);
+        k.tone({ type: 'sawtooth', freq: 150, attack: 0.15, hold: d, decay: 0.3, gain: 0.02, pan: p, filter: { type: 'lowpass', freq: 900 } });
+        k.burst({ attack: 0.15, hold: d, decay: 0.3, gain: 0.06, filter: 'bandpass', freq: 2200, Q: 1.2, pan: p });
+        [0, 0.25].forEach((w) => k.burst({ type: 'brown', when: d + 0.8 + w, attack: 0.002, decay: 0.1, gain: 0.2, filter: 'lowpass', freq: 400, pan: p }));
+      }
+    }, 6000);
+  };
+
+  S.clock = (k, out, { level = 1 } = {}) => {
+    let next = k.now() + 0.1;
+    let odd = false;
+    const schedule = () => {
+      if (next < k.now()) next = k.now() + 0.05;
+      while (next < k.now() + 1.2) {
+        const w = next - k.now();
+        k.burst({ when: w, attack: 0.0008, decay: 0.018, gain: 0.16 * level, filter: 'bandpass', freq: odd ? 2400 : 3000, Q: 4 });
+        k.tone({ freq: odd ? 1100 : 1300, when: w, attack: 0.0005, decay: 0.03, gain: 0.025 * level });
+        odd = !odd;
+        next += 1;
+      }
+    };
+    schedule();
+    k.every(300, 400, schedule);
+  };
+
+  S.pages = (k, out) => {
+    k.every(5000, 16000, () => {
+      const p = rand(-0.7, 0.7);
+      const d = rand(0.35, 0.7);
+      const g = rand(0.06, 0.12);
+      k.burst({ type: 'pink', attack: d * 0.35, decay: d * 0.65, gain: g, filter: 'bandpass', freq: rand(2500, 3500), to: rand(1200, 1800), Q: 0.7, pan: p });
+      k.burst({ type: 'white', when: 0.02, attack: 0.01, decay: d * 0.4, gain: g * 0.3, filter: 'highpass', freq: 5000, pan: p });
+      if (Math.random() < 0.3) {
+        k.burst({ type: 'brown', when: d, attack: 0.003, decay: 0.08, gain: g * 1.5, filter: 'lowpass', freq: 300, pan: p });
+      }
+    }, 1500);
+  };
+
+  // ---------- Nature ----------
+
+  S.birds = (k, out, { min = 1500, max = 5000 } = {}) => {
+    const species = [
+      (p) => { // chirp series
+        const n = Math.floor(rand(2, 6));
+        const base = rand(2600, 3800);
+        for (let i = 0; i < n; i++) k.tone({ freq: base, to: base * rand(1.2, 1.5), glide: 0.05, when: i * rand(0.09, 0.14), attack: 0.005, decay: 0.07, gain: rand(0.03, 0.06), pan: p });
+      },
+      (p) => { // whistle
+        const b = rand(1800, 2600);
+        k.tone({ path: [[0, b], [0.15, b * 1.3], [0.35, b * 0.9]], attack: 0.03, hold: 0.25, decay: 0.1, gain: 0.045, pan: p });
+        if (Math.random() < 0.6) k.tone({ path: [[0, b * 1.1], [0.2, b * 0.8]], when: 0.5, attack: 0.02, hold: 0.12, decay: 0.1, gain: 0.035, pan: p });
+      },
+      (p) => { // trill
+        const f = rand(3800, 5200);
+        const n = Math.floor(rand(8, 16));
+        for (let i = 0; i < n; i++) k.tone({ freq: f * rand(0.97, 1.03), when: i * 0.045, attack: 0.003, decay: 0.03, gain: 0.022, pan: p });
+      },
+      (p) => { // distant dove
+        const f = rand(500, 620);
+        [[0, 0.5], [0.7, 0.35], [1.15, 0.35]].forEach(([dt, d]) => k.tone({ path: [[0, f], [d * 0.4, f * 1.08], [d, f * 0.92]], when: dt, attack: 0.06, hold: d - 0.12, decay: 0.1, gain: 0.035, pan: p, filter: { type: 'lowpass', freq: 900 } }));
+      },
+      (p) => { // song phrase
+        const n = Math.floor(rand(3, 6));
+        let t = 0;
+        for (let i = 0; i < n; i++) {
+          const a = rand(2000, 3400);
+          const d = rand(0.08, 0.18);
+          k.tone({ path: [[0, a], [d, a * rand(0.75, 1.35)]], when: t, attack: 0.01, hold: d - 0.03, decay: 0.04, gain: rand(0.03, 0.05), pan: p });
+          t += d + rand(0.04, 0.1);
+        }
+      },
+    ];
+    const flock = Array.from({ length: 4 }, () => ({ sing: pick(species), pan: rand(-0.9, 0.9) }));
+    k.every(min, max, () => {
+      const bird = pick(flock);
+      bird.sing(bird.pan);
+      if (Math.random() < 0.05) { bird.sing = pick(species); bird.pan = rand(-0.9, 0.9); }
+    }, 600);
+  };
+
+  S.gulls = (k, out) => {
+    k.every(12000, 35000, () => {
+      const p = rand(-0.8, 0.8);
+      const n = Math.floor(rand(2, 5));
+      const base = rand(900, 1300);
+      const dist = rand(0.3, 1);
+      for (let i = 0; i < n; i++) {
+        const d = rand(0.25, 0.4);
+        k.tone({ type: 'sawtooth', path: [[0, base * 0.8], [d * 0.25, base * 1.15], [d, base * 0.7]], when: i * rand(0.35, 0.5), attack: 0.03, hold: d - 0.08, decay: 0.1, gain: 0.035 * dist, pan: p, filter: { type: 'bandpass', freq: base * 1.6, Q: 1.2 }, vibrato: { rate: 28, depth: 30 } });
+      }
+    }, 4000);
+  };
+
+  // ---------- Space ----------
+
+  S.drone = (k, out, { root = 55 } = {}) => {
+    const lp = k.filter('lowpass', 380, 1.2);
+    const bus = k.gain(1);
+    lp.connect(bus).connect(out);
+    [[root, 'sine', 0.35, 0], [root, 'sine', 0.35, 7], [root * 1.5, 'triangle', 0.08, -5], [root * 2, 'sine', 0.1, 3], [root * 3, 'sine', 0.03, 0]].forEach(([f, type, g, det]) => {
+      const gg = k.gain(g);
+      k.osc(type, f, det).connect(gg).connect(lp);
+      k.lfo(gg.gain, rand(0.03, 0.09), g * 0.4);
+    });
+    k.lfo(lp.frequency, 0.04, 160);
+    k.chain(k.noise('brown'), k.filter('lowpass', 160), k.gain(0.25), bus);
+    k.chain(k.noise('pink'), k.filter('bandpass', 700, 3), k.gain(0.025), bus);
+  };
+
+  S.shimmer = (k, out) => {
+    const scale = [69, 71, 73, 76, 78, 81, 83, 85, 88];
+    k.every(1800, 5500, () => {
+      const m = pick(scale);
+      k.tone({ freq: mtof(m), attack: rand(0.3, 1), hold: 0.2, decay: rand(4, 7), gain: rand(0.02, 0.045), pan: rand(-0.9, 0.9) });
+      if (Math.random() < 0.4) k.tone({ freq: mtof(m + 12), when: 0.1, attack: 0.5, decay: 5, gain: 0.012, pan: rand(-0.9, 0.9) });
+    }, 400);
+  };
+
+  S.engine = (k, out) => {
+    k.chain(k.noise('brown'), k.filter('lowpass', 110, 0.9), k.gain(0.7), out);
+    const g = k.gain(0.12);
+    k.osc('sine', 36).connect(g).connect(out);
+    k.lfo(g.gain, 0.21, 0.04);
+    k.osc('triangle', 72.4).connect(k.filter('lowpass', 200)).connect(k.gain(0.025)).connect(out);
+    k.every(15000, 40000, () => {
+      const f = pick([880, 1046.5, 1318.5]);
+      [0, 0.18].forEach((w) => k.tone({ freq: f, when: w, attack: 0.005, hold: 0.06, decay: 0.08, gain: 0.012, pan: rand(-0.6, 0.6) }));
+    });
+  };
+
+  // ---------- Music ----------
+
+  // [bass midi, chord voicing] — warm jazzy progressions for lo-fi style loops.
+  const PROGRESSIONS = [
+    [[41, [53, 57, 60, 64]], [40, [52, 55, 59, 62]], [38, [50, 53, 57, 60]], [36, [48, 52, 55, 59]]],
+    [[38, [53, 57, 60, 64]], [43, [53, 59, 64]], [36, [52, 55, 59, 62]], [45, [55, 60, 64, 67]]],
+    [[45, [55, 60, 64, 67]], [38, [53, 57, 60, 64]], [43, [53, 57, 59, 64]], [36, [52, 55, 59, 62]]],
+  ];
+
+  S.lofi = (k, out, { bpm = 70, lp = 1400, crackle = true, swing = 0.04, keys = 'triangle' } = {}) => {
+    const bus = k.gain(1);
+    const lpf = k.filter('lowpass', lp, 0.6);
+    k.chain(bus, lpf, out);
+    k.lfo(lpf.frequency, 0.07, lp * 0.25);
+    let prog = pick(PROGRESSIONS);
+    let i = 0;
+    const bar = (60 / bpm) * 4;
+    let next = k.now() + 0.2;
+
+    const playBar = (t) => {
+      const [bass, notes] = prog[i % prog.length];
+      i++;
+      if (i % (prog.length * 2) === 0) prog = pick(PROGRESSIONS);
+      const w = t - k.now();
+      notes.forEach((m, j) => k.tone({
+        freq: mtof(m), type: keys, when: w + j * 0.014, attack: 0.02, hold: bar * 0.1, decay: bar * 0.95,
+        gain: 0.045, pan: (j - 1.5) * 0.15, detune: rand(-8, 8), dest: bus,
+      }));
+      k.tone({ freq: mtof(bass), when: w, attack: 0.01, decay: bar * 0.45, gain: 0.14, dest: bus });
+      k.tone({ freq: mtof(bass), when: w + bar / 2, attack: 0.01, decay: bar * 0.4, gain: 0.1, dest: bus });
+      for (let beat = 0; beat < 4; beat++) {
+        const bt = w + (beat * bar) / 4;
+        k.tone({ freq: 60, to: 40, glide: 0.08, when: bt, attack: 0.002, decay: 0.12, gain: beat % 2 ? 0.05 : 0.11, dest: bus });
+        k.burst({ when: bt + bar / 8 + swing, decay: 0.04, gain: 0.012, filter: 'highpass', freq: 6500, dest: bus });
+        if (beat % 2) k.burst({ type: 'pink', when: bt, attack: 0.002, decay: 0.12, gain: 0.03, filter: 'bandpass', freq: 1800, Q: 0.8, dest: bus });
+      }
+      if (Math.random() < 0.65) {
+        const scale = notes.map((n) => n + 12);
+        const count = Math.floor(rand(1, 4));
+        for (let n = 0; n < count; n++) {
+          k.tone({ freq: mtof(pick(scale)), when: w + (Math.floor(rand(0, 8)) * bar) / 8, attack: 0.005, decay: 1.2, gain: 0.03, pan: rand(-0.3, 0.3), dest: bus });
+        }
+      }
+    };
+
+    const schedule = () => {
+      if (next < k.now()) next = k.now() + 0.1;
+      while (next < k.now() + 1.5) {
+        playBar(next);
+        next += bar;
+      }
+    };
+    schedule();
+    k.every(400, 500, schedule);
+    if (crackle) {
+      k.every(40, 400, () => k.burst({ decay: 0.004, gain: rand(0.01, 0.04), filter: 'highpass', freq: 2000, pan: rand(-0.5, 0.5), dest: bus }));
+    }
+  };
+  // ---------- Airport ----------
+
+  S.coffeeBar = (k, out) => {
+    S.espresso(k, out);
+    S.dishes(k, out, { min: 2500, max: 8000 });
+  };
+
+  // The classic three-note terminal chime, soft and reverberant.
+  S.departureChime = (k, out) => {
+    const bell = (freq, when) => {
+      [[1, 0.06, 2.4], [4.0, 0.012, 0.8], [2.0, 0.015, 1.4]].forEach(([m, g, d]) => k.tone({ freq: freq * m, when, attack: 0.004, decay: d, gain: g }));
+    };
+    k.every(50000, 110000, () => {
+      [[783.99, 0], [659.25, 0.42], [523.25, 0.84]].forEach(([f, w]) => bell(f, w));
+    }, 14000);
+  };
+
+  // A wheeled case rolling across tiles: a rumble plus a click at each joint.
+  S.suitcases = (k, out) => {
+    k.every(6000, 16000, () => {
+      const dur = rand(3, 6);
+      const from = Math.random() < 0.5 ? -0.9 : 0.9;
+      const t = k.now();
+      const src = k.noiseSource('pink');
+      const f = k.filter('bandpass', rand(320, 520), 1.2);
+      const g = k.gain(0);
+      const p = k.pan(from);
+      src.connect(f).connect(g).connect(p).connect(out);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.22, t + dur * 0.45);
+      g.gain.linearRampToValueAtTime(0, t + dur);
+      if (p.pan) p.pan.linearRampToValueAtTime(-from, t + dur);
+      src.start(t, rand(0, 4));
+      src.stop(t + dur + 0.1);
+      const gap = rand(0.24, 0.34);
+      for (let w = 0.2; w < dur - 0.2; w += gap) {
+        const x = w / dur;
+        const level = Math.max(0.1, Math.sin(Math.PI * x));
+        k.burst({ when: w, attack: 0.001, decay: 0.02, gain: 0.08 * level, filter: 'lowpass', freq: 1800, pan: from - 2 * from * x });
+      }
+    }, 3000);
+  };
+
+  // Engines idling on the apron, and now and then a jet taking off (the scene shows it).
+  S.jets = (k, out) => {
+    k.chain(k.noise('brown'), k.filter('lowpass', 200), k.gain(0.3), out);
+    const takeoff = () => {
+      FP.emit('takeoff');
+      const t = k.now();
+      const rise = 7, hold = 4, fall = 12;
+      const end = t + rise + hold + fall;
+      const p = k.pan(-0.6);
+      p.connect(out);
+      if (p.pan) p.pan.linearRampToValueAtTime(0.7, end);
+      [['brown', 'lowpass', 150, 420, 0.9], ['pink', 'bandpass', 700, 1100, 0.14]].forEach(([type, ft, f0, f1, peak]) => {
+        const src = k.noiseSource(type);
+        const f = k.filter(ft, f0, 0.8);
+        const g = k.gain(0);
+        src.connect(f).connect(g).connect(p);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(peak, t + rise);
+        g.gain.setValueAtTime(peak, t + rise + hold);
+        g.gain.linearRampToValueAtTime(0, end);
+        f.frequency.linearRampToValueAtTime(f1, t + rise);
+        f.frequency.linearRampToValueAtTime(f0, end);
+        src.start(t, rand(0, 4));
+        src.stop(end + 0.1);
+      });
+    };
+    k.every(35000, 70000, takeoff, 9000);
+  };
+
+  // ---------- Hotel ----------
+
+  // A gentle, generative lobby pianist: a slow waltz with a wandering melody.
+  const WALTZ = [
+    [43, [59, 62, 66]], [42, [57, 61, 64]], [40, [55, 59, 62]], [45, [55, 61, 64]],
+    [38, [54, 57, 61]], [47, [57, 62, 66]], [40, [55, 59, 62]], [45, [55, 61, 64]],
+  ];
+  const MELODY = [74, 76, 78, 79, 81, 83, 85, 86];
+
+  const pianoNote = (k, dest, midi, when, vel = 1, len = 3) => {
+    const f = mtof(midi);
+    const decay = len * (midi < 50 ? 1.6 : midi > 76 ? 0.75 : 1);
+    [[1, 1], [2, 0.42], [3, 0.2], [4, 0.1], [5, 0.05]].forEach(([n, a]) => {
+      const ratio = n * (1 + 0.0004 * n * n);
+      k.tone({ freq: f * ratio, when, attack: 0.004, decay: decay / Math.sqrt(n), gain: 0.05 * vel * a, dest });
+    });
+    k.burst({ type: 'pink', when, attack: 0.001, decay: 0.03, gain: 0.012 * vel, filter: 'lowpass', freq: 1200, dest });
+  };
+
+  S.piano = (k, out, { bpm = 66 } = {}) => {
+    const bus = k.gain(1);
+    k.chain(bus, k.filter('lowpass', 3600, 0.5), out);
+    const beat = 60 / bpm;
+    let next = k.now() + 0.3;
+    let bar = 0;
+    let mi = 3;
+    const playBar = (t) => {
+      const [bass, chord] = WALTZ[bar % WALTZ.length];
+      bar++;
+      const w = t - k.now();
+      pianoNote(k, bus, bass, w, 0.9, 4);
+      chord.forEach((m, j) => pianoNote(k, bus, m, w + beat + j * 0.012, 0.45, 2.5));
+      chord.forEach((m, j) => pianoNote(k, bus, m, w + beat * 2 + j * 0.012, 0.35, 2));
+      // melody: a random walk that leans toward chord tones
+      const notes = Math.random() < 0.25 ? 0 : Math.random() < 0.6 ? 1 : 2;
+      for (let n = 0; n < notes; n++) {
+        mi = Math.max(0, Math.min(MELODY.length - 1, mi + pick([-2, -1, -1, 0, 1, 1, 2])));
+        let note = MELODY[mi];
+        const tones = chord.map((c) => c + 12).concat(chord.map((c) => c + 24));
+        if (Math.random() < 0.6) note = tones.reduce((a, b) => (Math.abs(b - note) < Math.abs(a - note) ? b : a));
+        pianoNote(k, bus, note, w + n * beat * 1.5, 0.7, 3.5);
+      }
+    };
+    const schedule = () => {
+      if (next < k.now()) next = k.now() + 0.1;
+      while (next < k.now() + 2) {
+        playBar(next);
+        next += beat * 3;
+      }
+    };
+    schedule();
+    k.every(400, 500, schedule);
+  };
+
+  // Heels and shoes crossing a marble floor.
+  S.heels = (k, out) => {
+    k.every(7000, 18000, () => {
+      const heels = Math.random() < 0.5;
+      const n = Math.floor(rand(6, 12));
+      const step = heels ? rand(0.42, 0.5) : rand(0.5, 0.6);
+      const from = Math.random() < 0.5 ? -0.9 : 0.9;
+      for (let i = 0; i < n; i++) {
+        const x = i / (n - 1);
+        const pan = from - 2 * from * x;
+        const level = Math.max(0.15, Math.sin(Math.PI * (0.1 + 0.8 * x)));
+        if (heels) {
+          k.burst({ when: i * step, attack: 0.001, decay: 0.035, gain: 0.12 * level, filter: 'bandpass', freq: rand(2200, 2800), Q: 3, pan });
+          k.tone({ freq: rand(900, 1100), when: i * step, attack: 0.001, decay: 0.04, gain: 0.02 * level, pan });
+        } else {
+          k.burst({ when: i * step, attack: 0.002, decay: 0.05, gain: 0.08 * level, filter: 'bandpass', freq: rand(900, 1300), Q: 1.5, pan });
+        }
+      }
+    }, 4000);
+  };
+
+  // The front-desk service bell, or an elevator arriving (the scene opens its doors).
+  S.lobbyBells = (k, out) => {
+    k.every(30000, 80000, () => {
+      if (Math.random() < 0.5) {
+        const f = rand(2250, 2450);
+        [[1, 0.07, 2.6], [2.73, 0.03, 1.4], [5.1, 0.012, 0.7]].forEach(([m, g, d]) => k.tone({ freq: f * m, attack: 0.002, decay: d, gain: g, pan: 0.6 }));
+      } else {
+        FP.emit('elevator');
+        [[1318.5, 0], [1046.5, 0.32]].forEach(([f, w]) => k.tone({ freq: f, when: w + 2, attack: 0.005, decay: 1.6, gain: 0.04, pan: -0.7 }));
+      }
+    }, 12000);
+  };
+})();

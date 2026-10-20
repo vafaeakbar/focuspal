@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FocusPal</title>
+  <meta name="description" content="A focus timer built on proven work/break rhythms (Pomodoro, 50/10, 52/17, 90/20) with immersive, generated ambient environments.">
+  <meta name="theme-color" content="#0b0b10">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='none' stroke='%23e0a96d' stroke-width='7'/%3E%3Cpath d='M32 14v18l11 7' fill='none' stroke='%23f5f3ef' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+  <!-- Bump ?v= on every release so browsers fetch the new files. -->
+  <link rel="stylesheet" href="css/styles.css?v=20261020l">
+</head>
+<body data-mode="focus">
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="night" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+      </span>
+      <span>FocusPal</span>
+    </div>
+    <div class="today" id="todayStats" title="Completed focus sessions today">0 sessions · 0 min today</div>
+    <nav class="top-actions" aria-label="Panels">
+      <button class="avatar-btn" id="avatarBtn" title="Your avatar" aria-label="Your avatar"></button>
+      <button class="premium-chip" id="premiumBtn" title="FocusPal Premium"><span aria-hidden="true">✨</span><span class="premium-chip-label">Premium</span></button>
+      <button class="icon-btn night-btn" id="nightBtn" title="Night lighting (D)" aria-label="Turn on night lighting" aria-pressed="false">
+        <svg class="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+      </button>
+      <button class="icon-btn" data-open="timer" title="Timer &amp; technique" aria-label="Timer and technique settings">
+        <svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+      </button>
+      <button class="icon-btn" data-open="tasks" title="Tasks" aria-label="Tasks">
+        <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5L7.5 11"/><circle cx="5" cy="18" r="1.2"/></svg>
+      </button>
+      <button class="icon-btn" data-open="sounds" title="Sound mixer" aria-label="Sound mixer">
+        <svg viewBox="0 0 24 24"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="4" y="13" width="4" height="3" rx="1"/><rect x="10" y="7" width="4" height="3" rx="1"/><rect x="16" y="11" width="4" height="3" rx="1"/></svg>
+      </button>
+      <button class="icon-btn" id="focusModeBtn" title="Focus mode: full screen, no buttons (Z)" aria-label="Enter focus mode">
+        <svg viewBox="0 0 24 24"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+      <button class="icon-btn" id="fullscreenBtn" title="Full screen (F)" aria-label="Toggle full screen">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </nav>
+  </header>
+
+  <main class="stage">
+    <section class="focus-card" id="focusCard" aria-label="Focus timer">
+      <button class="icon-btn small min-btn" id="minBtn" title="Minimize timer (T)" aria-label="Minimize timer">
+        <svg viewBox="0 0 24 24"><path d="M5 14h6v6M19 10h-6V4M11 14l-7 7M13 10l7-7"/></svg>
+      </button>
+      <div class="mode-tabs" role="tablist" aria-label="Timer mode">
+        <button role="tab" data-mode="focus">Focus</button>
+        <button role="tab" data-mode="short">Short break</button>
+        <button role="tab" data-mode="long">Long break</button>
+      </div>
+
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 220 220" aria-hidden="true">
+          <circle class="ring-track" cx="110" cy="110" r="100" fill="none" stroke-width="6"/>
+          <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="100" fill="none" stroke-width="6"/>
+        </svg>
+        <div class="ring-center">
+          <div class="mode-label" id="modeLabel">Focus</div>
+          <div class="time" id="time" role="timer">25:00</div>
+          <div class="technique-label" id="techLabel">Pomodoro · 25 / 5</div>
+        </div>
+      </div>
+
+      <p class="focus-intent" id="focusIntent"></p>
+      <div class="session-dots" id="sessionDots" aria-label="Sessions in this cycle"></div>
+
+      <input class="intention" id="intention" type="text" maxlength="90" autocomplete="off"
+             placeholder="What will you focus on?" aria-label="What will you focus on?">
+
+      <div class="tip" id="tip" aria-live="polite">
+        <span class="tip-icon" id="tipIcon" aria-hidden="true">💡</span>
+        <p id="tipText"></p>
+      </div>
+
+      <div class="controls">
+        <button class="ctrl" id="resetBtn" title="Reset (R)" aria-label="Reset timer">
+          <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>
+        </button>
+        <button class="ctrl primary" id="startBtn" aria-label="Start timer (Space)">
+          <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+          <span id="startLabel">Start</span>
+        </button>
+        <button class="ctrl" id="skipBtn" title="Skip to next (S)" aria-label="Skip to next session">
+          <svg viewBox="0 0 24 24"><path d="M5 5.5v13l9-6.5z"/><path d="M18 5v14"/></svg>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div class="focus-hint" id="focusHint" role="status">Press Esc or double-click to leave focus mode</div>
+
+  <div class="mini-timer" id="miniTimer" hidden>
+    <button class="mini-time" id="miniExpand" title="Show the full timer (T)">
+      <span class="mini-dot" aria-hidden="true"></span>
+      <span class="mini-clock" id="miniTime">25:00</span>
+      <span class="mini-mode" id="miniMode">Focus</span>
+    </button>
+    <button class="mini-btn" id="miniPlay" aria-label="Start timer">
+      <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+    </button>
+    <button class="mini-btn" id="miniOpen" title="Show the full timer (T)" aria-label="Show the full timer">
+      <svg viewBox="0 0 24 24"><path d="M4 10V4h6M20 14v6h-6M4 4l7 7M20 20l-7-7"/></svg>
+    </button>
+    <span class="mini-progress" aria-hidden="true"><span id="miniBar"></span></span>
+  </div>
+
+  <footer class="envbar">
+    <button class="sound-toggle icon-btn" id="soundToggle" title="Ambience on/off (A)" aria-label="Toggle ambience">
+      <svg class="i-on" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+      <svg class="i-off" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+    </button>
+    <button class="map-btn" id="mapBtn" title="Open the map (M)">
+      <svg viewBox="0 0 24 24"><path d="M9 4.5L3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5z"/><path d="M9 4.5v13M15 6.5v13"/></svg>
+      <span class="map-btn-label">Map</span>
+      <span class="map-btn-where" id="mapBtnWhere">☕ Busy Café</span>
+    </button>
+  </footer>
+
+  <section class="map-screen" id="mapScreen" hidden aria-label="Choose where to study">
+    <div class="map-viewport" id="mapViewport">
+      <div class="map-stage" id="mapStage"></div>
+    </div>
+    <header class="map-head" id="mapHead">
+      <div class="map-title">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span>
+        <div class="map-title-text">
+          <h1>Where will you focus today?</h1>
+          <div class="map-progress" id="mapProgress">
+            <span id="mapProgressText"></span>
+            <div class="progress-bar"><span id="mapProgressBar"></span></div>
+          </div>
+        </div>
+        <button class="premium-chip small" id="mapPremiumBtn"><span aria-hidden="true">✨</span> Unlock all</button>
+      </div>
+      <div class="map-actions">
+        <span class="map-timer" id="mapTimer" hidden></span>
+        <button class="avatar-link" id="mapAvatarBtn"></button>
+        <button class="btn ghost-light" id="mapResume" hidden>← Back</button>
+      </div>
+    </header>
+    <div class="map-card" id="mapCard" role="dialog" aria-labelledby="mapCardName">
+      <button class="icon-btn small map-card-close" id="mapCardClose" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <div class="map-card-top">
+        <span class="map-card-emoji" id="mapCardEmoji" aria-hidden="true"></span>
+        <div>
+          <div class="map-card-name" id="mapCardName"></div>
+          <p class="map-card-tag" id="mapCardTag"></p>
+        </div>
+      </div>
+      <div class="map-card-sounds" id="mapCardSounds" aria-label="Sounds here"></div>
+      <div class="map-card-lock" id="mapCardLock" hidden>
+        <div class="map-card-lock-text" id="mapCardLockText"></div>
+        <div class="progress-bar"><span id="mapCardLockBar"></span></div>
+      </div>
+      <button class="btn map-card-go" id="mapCardGo">Focus here →</button>
+    </div>
+  </section>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="panel" id="panel" aria-label="Settings" aria-hidden="true">
+    <div class="panel-head">
+      <div class="panel-tabs" role="tablist">
+        <button role="tab" data-tab="timer">Timer</button>
+        <button role="tab" data-tab="tasks">Tasks</button>
+        <button role="tab" data-tab="sounds">Sounds</button>
+      </div>
+      <button class="icon-btn small" id="closePanel" aria-label="Close panel">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="panel-body" data-tab="timer">
+      <h3>Focus technique</h3>
+      <p class="hint">Not sure? <b>New to timers or struggling to start</b> → Pomodoro. <b>Studying or writing</b> → 50 / 10. <b>Deep project and already in flow</b> → 90 / 20.</p>
+      <div class="techniques" id="techniques"></div>
+
+      <div class="custom-fields" id="customFields">
+        <label>Focus <span><input type="number" min="1" max="180" data-custom="focus"> min</span></label>
+        <label>Short break <span><input type="number" min="1" max="60" data-custom="short"> min</span></label>
+        <label>Long break <span><input type="number" min="1" max="90" data-custom="long"> min</span></label>
+        <label>Long break every <span><input type="number" min="0" max="12" data-custom="every"> sessions</span></label>
+      </div>
+
+      <h3>Immersion</h3>
+      <p class="hint">How much the scene moves while you focus. Breaks always bring it fully back to life, because a calming view helps your attention recover.</p>
+      <div class="immersion" id="immersion" role="radiogroup" aria-label="Immersion level"></div>
+      <p class="immersion-blurb" id="immersionBlurb"></p>
+      <label class="toggle"><input type="checkbox" data-setting="sceneDark"><span></span>Night lighting for scenes</label>
+
+      <h3>Behaviour</h3>
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" data-setting="autoBreaks"><span></span>Start breaks automatically</label>
+        <label class="toggle"><input type="checkbox" data-setting="autoFocus"><span></span>Start next focus session automatically</label>
+        <label class="toggle"><input type="checkbox" data-setting="chime"><span></span>Play a chime between sessions</label>
+        <label class="toggle"><input type="checkbox" data-setting="notify"><span></span>Desktop notifications</label>
+        <label class="toggle"><input type="checkbox" data-setting="dimBreaks"><span></span>Soften ambience during breaks</label>
+        <label class="toggle"><input type="checkbox" data-setting="wakeLock"><span></span>Keep screen awake while focusing</label>
+      </div>
+
+      <details class="science">
+        <summary>Why work in intervals?</summary>
+        <ul>
+          <li><b>Attention fades with time on task.</b> Performance on sustained tasks drifts downward (the “vigilance decrement”); planned breaks let you come back fresher instead of grinding on tired.</li>
+          <li><b>A visible finish line helps you start.</b> Short, timeboxed blocks lower the barrier to beginning, which is why Pomodoro works so well against procrastination.</li>
+          <li><b>Rest your eyes.</b> The 20‑20‑20 rule: every 20 minutes, look about 6 m (20 ft) away for 20 seconds.</li>
+          <li><b>Make breaks real breaks.</b> Stand, move, hydrate, look out a window. Scrolling your phone keeps your brain busy and makes it harder to restart.</li>
+          <li><b>Steady ambient sound</b> can mask distracting noises and conversations. Keep it at a low, comfortable level.</li>
+        </ul>
+      </details>
+
+      <h3>Keyboard</h3>
+      <div class="shortcuts">
+        <span><kbd>Space</kbd> start / pause</span>
+        <span><kbd>R</kbd> reset</span>
+        <span><kbd>S</kbd> skip</span>
+        <span><kbd>M</kbd> map</span>
+        <span><kbd>A</kbd> ambience</span>
+        <span><kbd>I</kbd> immersion</span>
+        <span><kbd>T</kbd> minimize timer</span>
+        <span><kbd>D</kbd> night lighting</span>
+        <span><kbd>Z</kbd> focus mode</span>
+        <span><kbd>F</kbd> full screen</span>
+        <span><kbd>1–9</kbd> <kbd>0</kbd> travel to a place</span>
+      </div>
+    </div>
+
+    <div class="panel-body" data-tab="tasks">
+      <h3>Today’s tasks</h3>
+      <p class="hint">Pick one task to focus on. Each finished focus session adds a 🍅 to it.</p>
+      <form class="task-form" id="taskForm">
+        <input id="taskInput" type="text" maxlength="90" placeholder="Add a task…" autocomplete="off" aria-label="New task">
+        <button type="submit" class="btn">Add</button>
+      </form>
+      <ul class="task-list" id="taskList"></ul>
+      <button class="btn ghost" id="clearDone">Clear completed</button>
+    </div>
+
+    <div class="panel-body" data-tab="sounds">
+      <h3>Master</h3>
+      <div class="mixer-row master">
+        <span class="mix-name">Volume</span>
+        <input type="range" min="0" max="1" step="0.01" id="masterVol" aria-label="Master volume">
+      </div>
+      <div class="mixer-row">
+        <span class="mix-name">Chime</span>
+        <input type="range" min="0" max="1" step="0.01" id="chimeVol" aria-label="Chime volume">
+      </div>
+      <h3 id="mixTitle">Environment</h3>
+      <div id="mixer"></div>
+      <button class="btn ghost" id="resetMix">Reset this mix</button>
+      <p class="hint small">Every sound here is synthesized live in your browser. Nothing is downloaded or recorded.</p>
+    </div>
+  </aside>
+
+  <div class="modal" id="premiumModal" hidden role="dialog" aria-modal="true" aria-labelledby="premiumTitle">
+    <div class="modal-card">
+      <button class="icon-btn small modal-close" id="premiumClose" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <div class="premium-hero" aria-hidden="true">✨</div>
+      <h2 id="premiumTitle">FocusPal Premium</h2>
+      <p class="premium-reason" id="premiumReason"></p>
+      <ul class="premium-perks">
+        <li><span aria-hidden="true">🏝️</span><div><b>Every place, right away</b><small>Skip the unlock path and study anywhere on the island.</small></div></li>
+        <li><span aria-hidden="true">🗺️</span><div><b>New places as they’re added</b><small>Fresh spots to study in, included in your plan.</small></div><em>Soon</em></li>
+        <li><span aria-hidden="true">🎚️</span><div><b>Saved sound mixes</b><small>Keep your favourite blend for each place.</small></div><em>Soon</em></li>
+        <li><span aria-hidden="true">📈</span><div><b>Focus history &amp; streaks</b><small>See your weeks add up.</small></div><em>Soon</em></li>
+      </ul>
+      <div class="plans" id="premiumPlans" role="radiogroup" aria-label="Billing">
+        <button class="plan" data-plan="monthly" role="radio"><span class="plan-name">Monthly</span><span class="plan-price" id="priceMonthly"></span><span class="plan-per">per month</span></button>
+        <button class="plan" data-plan="yearly" role="radio"><span class="plan-badge" id="yearlyNote"></span><span class="plan-name">Yearly</span><span class="plan-price" id="priceYearly"></span><span class="plan-per">per year</span></button>
+      </div>
+      <button class="btn premium-cta" id="premiumCta">Coming soon</button>
+      <p class="hint small" id="premiumNote">Prefer to earn it? Every place also unlocks for free as you complete focus sessions.</p>
+      <div class="dev-row" id="premiumDev" hidden>
+        <span>Developer testing (only shown locally)</span>
+        <button class="btn ghost" id="premiumDevToggle">Turn Premium on</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/config.js?v=20261020l"></script>
+  <script src="js/audio.js?v=20261020l"></script>
+  <script src="js/sounds.js?v=20261020l"></script>
+  <script src="js/scenes.js?v=20261020l"></script>
+  <script src="js/environments.js?v=20261020l"></script>
+  <script src="js/avatar.js?v=20261020l"></script>
+  <script src="js/premium.js?v=20261020l"></script>
+  <script src="js/map.js?v=20261020l"></script>
+  <script src="js/app.js?v=20261020l"></script>
+</body>
+</html>
