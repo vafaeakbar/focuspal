@@ -278,7 +278,6 @@
       const before = unlockedIds();
       addStats(1, Math.round(timer.total / 60));
       const fresh = unlockedIds().filter((id) => !before.includes(id));
-      if (!silent) maybeShowDua();
       if (fresh.length) {
         store.set('newPlaces', [...store.get('newPlaces', []), ...fresh]);
         if (!silent) {
@@ -295,6 +294,8 @@
       const next = nextBreak(timer.cycle);
       setMode(next);
       if (!silent) {
+        // Now that the break has begun: a deferred Friday card, or a milestone card.
+        if (!maybeShowFridayDua(4500)) maybeShowDua();
         announce('Focus session complete! 🎉', `Time for a ${next === 'long' ? 'long' : 'short'} break: ${minutesFor(next)} minutes.`, 'break');
         if (settings.autoBreaks) start();
       }
@@ -916,11 +917,26 @@
     if (!due.length) return;
     // Passing several milestones at once still shows the card only once.
     store.set('duaSeen', [...seen, ...due]);
+    showDua(4500);
+  }
+
+  // Fridays: the card once when FocusPal opens (local time). If a focus session is
+  // running at that moment, it waits for the next break instead.
+  function maybeShowFridayDua(delay) {
+    if (new Date().getDay() !== 5) return false;
+    if (store.get('duaFriday', '') === todayKey()) return false;
+    if (timer.running && timer.mode === 'focus') return false;
+    store.set('duaFriday', todayKey());
+    showDua(delay);
+    return true;
+  }
+
+  function showDua(delay) {
     setTimeout(() => {
       const card = $('#duaCard');
       card.hidden = false;
       requestAnimationFrame(() => card.classList.add('show'));
-    }, 4500);
+    }, delay);
   }
   function closeDua() {
     const card = $('#duaCard');
@@ -1158,6 +1174,8 @@
   resize();
   requestAnimationFrame(loop);
   setInterval(tick, 250);
+
+  maybeShowFridayDua(1500);
 
   // A session already in progress goes straight back to its place; otherwise start on the map.
   if (timer.running) entered = true;
