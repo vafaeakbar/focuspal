@@ -139,10 +139,11 @@
     },
     {
       id: 'henson', name: 'Henson Site Office', emoji: '🏗️', accent: '#d45a47', scene: 'henson', unlock: 0,
-      tagline: 'A site office on a Henson project at dusk: blueprints on the desk, a crane and a substation outside. Build it right, build it once.',
+      tagline: 'A site office on a Henson project at dusk: blueprints on the desk, a crane and a substation outside, and a gentle Persian santur. Build it right, build it once.',
       dedication: FP.config.henson.dedication,
       dedicationAr: FP.config.henson.dedicationAr,
       layers: [
+        { id: 'santur', name: 'Persian santur', vol: 0.45, gain: 2.5, reverb: 0.55, create: (k, o) => S.santur(k, o) },
         { id: 'site', name: 'Construction site', vol: 0.45, gain: 1, reverb: 0.5, create: (k, o) => S.site(k, o) },
         { id: 'hum', name: 'Substation hum', vol: 0.3, gain: 0.5, create: (k, o) => S.transformer(k, o) },
         { id: 'ac', name: 'Site-office AC', vol: 0.4, gain: 0.65, create: (k, o) => S.hvac(k, o) },

@@ -641,4 +641,48 @@
       for (let i = 0; i < n; i++) k.tone({ freq: 1050, when: i * 0.9, attack: 0.01, hold: 0.32, decay: 0.05, gain: 0.012, pan: p, filter: { type: 'lowpass', freq: 1400 }, dest: bus });
     }, 12000);
   };
+  // ---------- Persian santur (dastgāh Shur) ----------
+
+  // One santur strike: paired, slightly detuned strings with bright partials and a hammer click.
+  const santurNote = (k, dest, f, when, vel = 1, pan = 0) => {
+    [[1, 1, 2.4], [2, 0.45, 1.6], [3, 0.22, 1.0], [4.02, 0.12, 0.7], [5.05, 0.06, 0.5]].forEach(([m, a, d]) => {
+      [-4, 4].forEach((cents) => k.tone({ freq: f * m, detune: cents, when, attack: 0.002, decay: d * rand(0.9, 1.1), gain: 0.022 * vel * a, pan, dest }));
+    });
+    k.burst({ when, attack: 0.0008, decay: 0.012, gain: 0.03 * vel, filter: 'bandpass', freq: 3200, Q: 1.2, pan, dest });
+  };
+
+  // Shur on G: G, A koron (a quarter-tone flat), B♭, C, D, E♭, F. Free-rhythm phrases (āvāz)
+  // that come to rest on G or B♭, with riz (tremolo) on long notes and phrase endings.
+  const SHUR = [0, 1.5, 3, 5, 7, 8, 10];
+  const shurNote = (d) => 67 + 12 * Math.floor(d / 7) + SHUR[((d % 7) + 7) % 7];
+
+  S.santur = (k, out) => {
+    const bus = k.gain(1);
+    k.chain(bus, k.filter('lowpass', 5200, 0.5), out);
+    let pos = 2;
+    const phrase = () => {
+      let w = 0.05;
+      const n = Math.floor(rand(4, 10));
+      for (let i = 0; i < n; i++) {
+        const last = i === n - 1;
+        if (last) pos = Math.random() < 0.6 ? 0 : 2;
+        else pos = Math.max(-2, Math.min(9, pos + pick([-1, -1, 1, 1, -2, 2, 0])));
+        const f = mtof(shurNote(pos));
+        const p = rand(-0.25, 0.25);
+        if (last || Math.random() < 0.18) {
+          const dur = last ? rand(1.6, 2.6) : rand(0.8, 1.4);
+          const step = rand(0.065, 0.085);
+          for (let tt = 0; tt < dur; tt += step) santurNote(k, bus, f, w + tt, 0.45 + 0.4 * Math.sin((Math.PI * tt) / dur), p);
+          w += dur + rand(0.1, 0.25);
+        } else {
+          if (Math.random() < 0.2) santurNote(k, bus, mtof(shurNote(pos + 1)), w, 0.45, p);
+          santurNote(k, bus, f, w + 0.06, rand(0.7, 1), p);
+          w += rand(0.3, 0.62);
+        }
+      }
+      santurNote(k, bus, mtof(shurNote(pos) - 12), Math.max(0, w - 0.4), 0.5, 0);
+      k.after((w + rand(1.6, 3.2)) * 1000, phrase);
+    };
+    k.after(800, phrase);
+  };
 })();
