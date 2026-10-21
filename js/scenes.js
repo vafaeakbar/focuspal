@@ -2772,4 +2772,419 @@
       },
     };
   };
+  // ======================================================================
+  // HENSON SITE OFFICE (in loving memory of the founder)
+  // ======================================================================
+  const hensonLogo = new Image();
+  hensonLogo.src = FP.config.henson.logo;
+  if (document.fonts && document.fonts.load) {
+    ['700 20px "Libre Baskerville"', 'italic 400 16px "Libre Baskerville"', '600 16px Cairo'].forEach((f) => document.fonts.load(f).catch(() => {}));
+  }
+
+  scenes.henson = (w, h, dpr) => {
+    const hc = FP.config.henson;
+    const wallW = Math.max(180, w * 0.26);
+    const winX0 = wallW + 26;
+    const winX1 = w - Math.max(22, w * 0.03);
+    const winY0 = h * 0.11;
+    const winY1 = h * 0.64;
+    const ww = winX1 - winX0;
+    const wh = winY1 - winY0;
+    const horizon = winY0 + wh * 0.7;
+    const ground = horizon + (winY1 - horizon) * 0.35;
+    const deskY = h * 0.82;
+
+    // Company board on the left wall, then the dedication plaque under it.
+    const board = { x: 22, y: h * 0.1, w: wallW - 44 };
+    board.logo = Math.min(board.w * 0.5, 140);
+    board.name = Math.max(15, Math.min(24, board.w * 0.1));
+    let y = board.y + 18;
+    board.logoY = y;
+    y += board.logo + 12 + board.name;
+    board.nameY = y;
+    y += board.name * 1.45;
+    board.arY = y;
+    y += board.name * 0.62 + 14;
+    board.mottoY = y;
+    y += Math.max(10, board.name * 0.45) + 12;
+    board.sinceY = y;
+    board.h = y - board.y + 16;
+    const plaque = { w: board.w * 0.94, h: 66, y: board.y + board.h + 22 };
+    plaque.x = board.x + (board.w - plaque.w) / 2;
+
+    // Crane geometry (outside, in page coordinates).
+    const crane = { x: winX0 + ww * 0.6, top: winY0 + wh * 0.1, L: ww * 0.27 };
+    crane.jibY = crane.top + 10;
+
+    const view = layer(w, h, dpr, (c) => {
+      c.save();
+      c.beginPath();
+      c.rect(winX0, winY0, ww, wh);
+      c.clip();
+      c.fillStyle = vGrad(c, winY0, horizon, [[0, '#1d2a4f'], [0.6, '#6b5a7e'], [0.9, '#e5875f'], [1, '#f3b47c']]);
+      c.fillRect(winX0, winY0, ww, horizon - winY0);
+      glow(c, winX0 + ww * 0.12, horizon, Math.max(ww, wh) * 0.45, 'rgba(255,170,110,A)', 0.45);
+      // distant city
+      let x = winX0;
+      while (x < winX1) {
+        const bw = rand(20, 60);
+        const bh = rand(8, 46);
+        c.fillStyle = '#2b2f4a';
+        c.fillRect(x, horizon - bh, bw, bh);
+        c.fillStyle = 'rgba(255,214,140,0.5)';
+        for (let yy = horizon - bh + 5; yy < horizon - 4; yy += 8) for (let xx = x + 3; xx < x + bw - 3; xx += 7) if (Math.random() < 0.25) c.fillRect(xx, yy, 2.5, 3.5);
+        x += bw + rand(6, 30);
+      }
+      // site ground
+      c.fillStyle = vGrad(c, horizon, winY1, [[0, '#5e4c40'], [1, '#33291f']]);
+      c.fillRect(winX0, horizon, ww, winY1 - horizon);
+      // building going up: concrete frame, lit lower floors, open top floors with rebar
+      const bx = winX0 + ww * 0.63;
+      const bW = ww * 0.19;
+      const floors = 8;
+      const bTop = winY0 + wh * 0.3;
+      const fh = (ground - bTop) / floors;
+      for (let f = 0; f < floors; f++) {
+        const fy = ground - (f + 1) * fh;
+        if (f < 5) {
+          for (let k = 0; k < 6; k++) {
+            c.fillStyle = Math.random() < 0.35 ? 'rgba(255,217,138,0.75)' : 'rgba(120,150,190,0.35)';
+            c.fillRect(bx + 4 + k * (bW / 6), fy + 4, bW / 6 - 6, fh - 8);
+          }
+        }
+        c.fillStyle = '#7d8592';
+        c.fillRect(bx - 4, fy + fh - 4, bW + 8, 4);
+      }
+      c.fillStyle = '#6a7280';
+      for (let k = 0; k <= 6; k++) c.fillRect(bx + k * (bW / 6) - 2, bTop, 4, ground - bTop);
+      c.strokeStyle = 'rgba(160,120,90,0.8)';
+      c.lineWidth = 1;
+      for (let k = 0; k <= 6; k++) {
+        c.beginPath();
+        c.moveTo(bx + k * (bW / 6), bTop);
+        c.lineTo(bx + k * (bW / 6), bTop - 14);
+        c.stroke();
+      }
+      // substation: gantries, wires, transformers and insulators
+      const sx0 = winX0 + ww * 0.84;
+      const sx1 = winX1 - 12;
+      c.strokeStyle = '#9aa3b0';
+      c.lineWidth = 3;
+      [sx0 + 10, sx1 - 10].forEach((gx) => {
+        c.beginPath();
+        c.moveTo(gx - 16, ground);
+        c.lineTo(gx - 16, ground - 78);
+        c.moveTo(gx + 16, ground);
+        c.lineTo(gx + 16, ground - 78);
+        c.moveTo(gx - 22, ground - 72);
+        c.lineTo(gx + 22, ground - 72);
+        c.stroke();
+      });
+      c.lineWidth = 1.2;
+      c.strokeStyle = 'rgba(30,30,40,0.8)';
+      for (let k = -1; k <= 1; k++) {
+        c.beginPath();
+        c.moveTo(sx0 + 10 + k * 12, ground - 72);
+        c.quadraticCurveTo((sx0 + sx1) / 2, ground - 60, sx1 - 10 + k * 12, ground - 72);
+        c.stroke();
+      }
+      [sx0 + (sx1 - sx0) * 0.3, sx0 + (sx1 - sx0) * 0.65].forEach((tx) => {
+        c.fillStyle = '#7d8794';
+        c.fillRect(tx - 22, ground - 34, 44, 34);
+        c.strokeStyle = 'rgba(0,0,0,0.25)';
+        c.lineWidth = 1;
+        for (let k = -18; k <= 18; k += 6) {
+          c.beginPath();
+          c.moveTo(tx + k, ground - 30);
+          c.lineTo(tx + k, ground - 4);
+          c.stroke();
+        }
+        c.fillStyle = '#c9cfd8';
+        for (let k = -1; k <= 1; k++) for (let d = 0; d < 3; d++) {
+          c.beginPath();
+          c.ellipse(tx + k * 12, ground - 38 - d * 5, 4, 2, 0, 0, TAU);
+          c.fill();
+        }
+      });
+      // site fence with a Henson banner
+      c.fillStyle = 'rgba(30,25,22,0.85)';
+      for (let fx = winX0; fx < winX1; fx += 26) c.fillRect(fx, ground + 8, 3, winY1 - ground);
+      c.fillStyle = 'rgba(210,210,210,0.12)';
+      c.fillRect(winX0, ground + 10, ww, winY1 - ground);
+      const banX = winX0 + ww * 0.12;
+      c.fillStyle = hc.navy;
+      c.fillRect(banX, ground + 14, 120, 22);
+      c.fillStyle = hc.red;
+      c.fillRect(banX, ground + 32, 120, 4);
+      c.fillStyle = '#ffffff';
+      c.font = '700 11px "Libre Baskerville", Georgia, serif';
+      c.fillText('HENSON W.L.L.', banX + 10, ground + 29);
+      // floodlight poles
+      [winX0 + ww * 0.56, winX0 + ww * 0.9].forEach((px) => {
+        c.fillStyle = '#2a2a33';
+        c.fillRect(px - 2, ground - 96, 4, 96 + 10);
+        c.fillRect(px - 12, ground - 100, 24, 6);
+      });
+      // tower crane (static parts)
+      c.strokeStyle = '#e0a03a';
+      c.lineWidth = 2.5;
+      c.beginPath();
+      c.moveTo(crane.x - 6, ground);
+      c.lineTo(crane.x - 6, crane.top);
+      c.moveTo(crane.x + 6, ground);
+      c.lineTo(crane.x + 6, crane.top);
+      for (let yy = ground; yy > crane.top + 12; yy -= 16) {
+        c.moveTo(crane.x - 6, yy);
+        c.lineTo(crane.x + 6, yy - 8);
+        c.lineTo(crane.x - 6, yy - 16);
+      }
+      c.moveTo(crane.x - crane.L * 0.35, crane.jibY);
+      c.lineTo(crane.x + crane.L, crane.jibY);
+      c.moveTo(crane.x - crane.L * 0.35, crane.jibY + 7);
+      c.lineTo(crane.x + crane.L, crane.jibY + 7);
+      for (let jx = crane.x - crane.L * 0.35; jx < crane.x + crane.L; jx += 12) {
+        c.moveTo(jx, crane.jibY + 7);
+        c.lineTo(jx + 6, crane.jibY);
+        c.lineTo(jx + 12, crane.jibY + 7);
+      }
+      c.stroke();
+      c.strokeStyle = 'rgba(224,160,58,0.7)';
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(crane.x, crane.top - 22);
+      c.lineTo(crane.x + crane.L * 0.7, crane.jibY);
+      c.moveTo(crane.x, crane.top - 22);
+      c.lineTo(crane.x - crane.L * 0.33, crane.jibY);
+      c.stroke();
+      c.fillStyle = '#e0a03a';
+      c.beginPath();
+      c.moveTo(crane.x - 6, crane.top);
+      c.lineTo(crane.x, crane.top - 24);
+      c.lineTo(crane.x + 6, crane.top);
+      c.fill();
+      c.fillStyle = '#5a6372';
+      c.fillRect(crane.x - crane.L * 0.35, crane.jibY + 7, 26, 18);
+      c.fillStyle = '#d8dde5';
+      c.fillRect(crane.x + 7, crane.jibY + 8, 14, 12);
+      c.restore();
+    });
+
+    const room = layer(w, h, dpr, (c) => {
+      // portacabin walls with panel seams
+      c.fillStyle = vGrad(c, 0, deskY, [[0, '#cfcabd'], [1, '#b9b2a2']]);
+      c.fillRect(0, 0, w, deskY);
+      c.fillStyle = 'rgba(0,0,0,0.07)';
+      for (let x = 0; x < w; x += 120) c.fillRect(x, 0, 2, deskY);
+      // window cut-out and aluminium frame
+      c.clearRect(winX0, winY0, ww, wh);
+      c.strokeStyle = '#ecebe6';
+      c.lineWidth = 10;
+      c.strokeRect(winX0 - 5, winY0 - 5, ww + 10, wh + 10);
+      c.fillStyle = '#ecebe6';
+      [1, 2].forEach((k) => c.fillRect(winX0 + (ww * k) / 3 - 3, winY0, 6, wh));
+      c.fillStyle = 'rgba(0,0,0,0.12)';
+      c.fillRect(winX0 - 10, winY1 + 5, ww + 20, 6);
+      // company board and memorial plaque (text and logo are drawn live)
+      c.fillStyle = 'rgba(0,0,0,0.15)';
+      roundRect(c, board.x + 4, board.y + 6, board.w, board.h, 10);
+      c.fill();
+      c.fillStyle = '#f8f7f3';
+      roundRect(c, board.x, board.y, board.w, board.h, 10);
+      c.fill();
+      c.strokeStyle = hc.navy;
+      c.lineWidth = 3;
+      c.stroke();
+      c.fillStyle = hc.red;
+      c.fillRect(board.x + 10, board.y, board.w - 20, 5);
+      const pg = c.createLinearGradient(plaque.x, 0, plaque.x + plaque.w, 0);
+      pg.addColorStop(0, '#9c7a3e');
+      pg.addColorStop(0.5, '#d8b56e');
+      pg.addColorStop(1, '#9c7a3e');
+      c.fillStyle = pg;
+      roundRect(c, plaque.x, plaque.y, plaque.w, plaque.h, 6);
+      c.fill();
+      c.strokeStyle = '#6e5426';
+      c.lineWidth = 2;
+      roundRect(c, plaque.x + 4, plaque.y + 4, plaque.w - 8, plaque.h - 8, 4);
+      c.stroke();
+      // desk with blueprints, a hard hat and a mug
+      c.fillStyle = vGrad(c, deskY, h, [[0, '#7a5a3e'], [1, '#4a3424']]);
+      c.fillRect(0, deskY, w, h - deskY);
+      c.fillStyle = 'rgba(255,230,200,0.25)';
+      c.fillRect(0, deskY, w, 2);
+      c.save();
+      c.translate(w * 0.62, deskY + (h - deskY) * 0.55);
+      c.rotate(-0.04);
+      const pw = Math.min(380, w * 0.3);
+      const ph = (h - deskY) * 0.8;
+      c.fillStyle = '#2f5d9c';
+      c.fillRect(-pw / 2, -ph / 2, pw, ph);
+      c.strokeStyle = 'rgba(255,255,255,0.18)';
+      c.lineWidth = 1;
+      for (let gx = -pw / 2; gx < pw / 2; gx += 14) { c.beginPath(); c.moveTo(gx, -ph / 2); c.lineTo(gx, ph / 2); c.stroke(); }
+      for (let gy = -ph / 2; gy < ph / 2; gy += 14) { c.beginPath(); c.moveTo(-pw / 2, gy); c.lineTo(pw / 2, gy); c.stroke(); }
+      c.strokeStyle = 'rgba(255,255,255,0.85)';
+      c.lineWidth = 1.6;
+      c.strokeRect(-pw * 0.3, -ph * 0.32, pw * 0.42, ph * 0.6);
+      c.strokeRect(-pw * 0.3, -ph * 0.32, pw * 0.2, ph * 0.3);
+      c.beginPath();
+      c.arc(pw * 0.25, 0, ph * 0.22, 0, TAU);
+      c.moveTo(pw * 0.25 - ph * 0.3, 0);
+      c.lineTo(pw * 0.25 + ph * 0.3, 0);
+      c.stroke();
+      c.fillStyle = '#e9e4d6';
+      c.fillRect(pw / 2 - 6, -ph / 2, 14, ph);
+      c.restore();
+      const hx = Math.max(70, wallW * 0.42);
+      const hy = deskY + (h - deskY) * 0.62;
+      c.fillStyle = 'rgba(0,0,0,0.25)';
+      c.beginPath();
+      c.ellipse(hx + 6, hy + 10, 62, 10, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = '#f4f2ec';
+      c.beginPath();
+      c.ellipse(hx, hy + 4, 60, 9, 0, 0, TAU);
+      c.fill();
+      c.beginPath();
+      c.arc(hx, hy, 44, Math.PI, TAU);
+      c.fill();
+      c.fillStyle = hc.red;
+      c.fillRect(hx - 5, hy - 44, 10, 44);
+      c.fillStyle = hc.navy;
+      c.fillRect(hx - 44, hy - 4, 88, 5);
+      const mx = wallW + Math.max(50, w * 0.05);
+      c.fillStyle = hc.navy;
+      roundRect(c, mx - 22, deskY + 8, 44, 50, 7);
+      c.fill();
+      c.fillStyle = hc.red;
+      c.fillRect(mx - 22, deskY + 26, 44, 8);
+    });
+
+    const lamp = { x: w - Math.max(110, w * 0.09), y: deskY - 6 };
+    let lightT = 0;
+
+    return {
+      draw(c, t, dt) {
+        c.drawImage(view, 0, 0, w, h);
+        c.save();
+        c.beginPath();
+        c.rect(winX0, winY0, ww, wh);
+        c.clip();
+        // floodlight cones
+        c.globalCompositeOperation = 'lighter';
+        [winX0 + ww * 0.56, winX0 + ww * 0.9].forEach((px) => {
+          const g = c.createLinearGradient(0, ground - 96, 0, ground + 30);
+          g.addColorStop(0, 'rgba(255,214,150,0.35)');
+          g.addColorStop(1, 'rgba(255,214,150,0)');
+          c.fillStyle = g;
+          c.beginPath();
+          c.moveTo(px - 10, ground - 94);
+          c.lineTo(px + 10, ground - 94);
+          c.lineTo(px + 70, ground + 30);
+          c.lineTo(px - 70, ground + 30);
+          c.fill();
+        });
+        c.globalCompositeOperation = 'source-over';
+        // crane trolley, cable and a slowly swaying steel beam
+        const tx = crane.x + crane.L * (0.25 + 0.65 * (0.5 + 0.5 * Math.sin(t * 0.1)));
+        const drop = 40 + (0.5 + 0.5 * Math.sin(t * 0.07 + 1)) * (ground - crane.jibY - 120);
+        const sway = Math.sin(t * 0.6) * 0.04;
+        c.fillStyle = '#3b4a5a';
+        c.fillRect(tx - 6, crane.jibY + 7, 12, 5);
+        c.strokeStyle = 'rgba(40,40,48,0.9)';
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(tx, crane.jibY + 12);
+        c.lineTo(tx + Math.sin(sway) * drop, crane.jibY + 12 + drop);
+        c.stroke();
+        c.save();
+        c.translate(tx + Math.sin(sway) * drop, crane.jibY + 12 + drop);
+        c.rotate(sway);
+        c.fillStyle = '#3b4a5a';
+        c.fillRect(-2, 0, 4, 6);
+        c.fillStyle = hc.navy;
+        c.fillRect(-26, 6, 52, 6);
+        c.restore();
+        // aviation lights
+        lightT += dt;
+        if (Math.sin(lightT * 3) > 0.4) {
+          c.globalCompositeOperation = 'lighter';
+          glow(c, crane.x, crane.top - 26, 8, 'rgba(255,60,60,A)', 0.9);
+          glow(c, crane.x + crane.L, crane.jibY, 7, 'rgba(255,60,60,A)', 0.9);
+          c.globalCompositeOperation = 'source-over';
+        }
+        c.restore();
+
+        c.drawImage(room, 0, 0, w, h);
+        // company board
+        if (hensonLogo.complete && hensonLogo.naturalWidth) {
+          c.drawImage(hensonLogo, board.x + (board.w - board.logo) / 2, board.logoY, board.logo, board.logo);
+        }
+        const cx = board.x + board.w / 2;
+        c.textAlign = 'center';
+        c.fillStyle = hc.navy;
+        c.font = `700 ${board.name}px "Libre Baskerville", Georgia, serif`;
+        c.fillText(hc.name, cx, board.nameY);
+        c.direction = 'rtl';
+        c.font = `600 ${board.name * 0.85}px Cairo, sans-serif`;
+        c.fillText(hc.nameAr, cx, board.arY);
+        c.direction = 'ltr';
+        c.fillStyle = hc.red;
+        c.font = `italic 400 ${board.name * 0.62}px "Libre Baskerville", Georgia, serif`;
+        c.fillText(hc.motto, cx, board.mottoY);
+        c.fillStyle = '#6e685f';
+        c.font = `600 ${Math.max(10, board.name * 0.45)}px Inter, sans-serif`;
+        c.fillText(hc.since.toUpperCase(), cx, board.sinceY);
+        // memorial plaque
+        const pcx = plaque.x + plaque.w / 2;
+        c.fillStyle = '#3a2a10';
+        c.font = `italic 400 ${Math.max(10, Math.min(14, plaque.w * 0.068))}px "Libre Baskerville", Georgia, serif`;
+        c.fillText(hc.dedication, pcx, plaque.y + 27);
+        c.direction = 'rtl';
+        c.font = `600 ${Math.max(11, Math.min(15, plaque.w * 0.075))}px Cairo, sans-serif`;
+        c.fillText(hc.dedicationAr, pcx, plaque.y + 50);
+        c.direction = 'ltr';
+        c.textAlign = 'left';
+        // desk lamp: weighted base, two-part arm, shade angled down at the plans
+        const base = { x: lamp.x, y: lamp.y + 44 };
+        const elbow = { x: lamp.x + 10, y: lamp.y - 60 };
+        const head = { x: lamp.x - 58, y: lamp.y - 92 };
+        c.fillStyle = '#2b2f3a';
+        c.beginPath();
+        c.ellipse(base.x, base.y, 30, 8, 0, 0, TAU);
+        c.fill();
+        c.strokeStyle = '#2b2f3a';
+        c.lineWidth = 6;
+        c.lineCap = 'round';
+        c.beginPath();
+        c.moveTo(base.x, base.y - 4);
+        c.lineTo(elbow.x, elbow.y);
+        c.lineTo(head.x, head.y);
+        c.stroke();
+        c.fillStyle = hc.red;
+        c.beginPath();
+        c.arc(elbow.x, elbow.y, 5, 0, TAU);
+        c.fill();
+        c.save();
+        c.translate(head.x, head.y);
+        c.rotate(-0.55);
+        c.fillStyle = hc.navy;
+        c.beginPath();
+        c.moveTo(-8, -6);
+        c.lineTo(8, -6);
+        c.lineTo(24, 30);
+        c.lineTo(-24, 30);
+        c.closePath();
+        c.fill();
+        c.fillStyle = 'rgba(255,236,190,0.95)';
+        c.beginPath();
+        c.ellipse(0, 30, 22, 5, 0, 0, TAU);
+        c.fill();
+        c.restore();
+        c.globalCompositeOperation = 'lighter';
+        glow(c, head.x - 40, deskY + (h - deskY) * 0.5, 170, 'rgba(255,205,140,A)', 0.24);
+        c.globalCompositeOperation = 'source-over';
+      },
+    };
+  };
 })();

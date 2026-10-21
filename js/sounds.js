@@ -604,4 +604,41 @@
       }
     }, 12000);
   };
+  // ---------- Henson site office ----------
+
+  // A substation's low mains hum (Bahrain's grid runs at 50 Hz, so transformers hum at 100 Hz).
+  S.transformer = (k, out) => {
+    const bus = k.gain(1);
+    k.chain(bus, k.filter('lowpass', 900, 0.6), out);
+    [[100, 0.06, 0], [200, 0.025, 3], [300, 0.012, -2], [400, 0.006, 1]].forEach(([f, g, d]) => {
+      const gg = k.gain(g);
+      k.osc('sine', f, d).connect(gg).connect(bus);
+      k.lfo(gg.gain, rand(0.05, 0.12), g * 0.3);
+    });
+    k.chain(k.noise('brown'), k.filter('lowpass', 180), k.gain(0.12), bus);
+  };
+
+  // A building site in the distance: machinery swelling and fading, the odd clang, rare crane beeps.
+  S.site = (k, out) => {
+    const bus = k.gain(1);
+    k.chain(bus, k.filter('lowpass', 2200, 0.5), out);
+    const rf = k.filter('lowpass', 260, 0.7);
+    const rg = k.gain(0.25);
+    k.chain(k.noise('brown'), rf, rg, bus);
+    k.lfo(rg.gain, 0.03, 0.1);
+    k.lfo(rf.frequency, 0.05, 80);
+    const eng = k.gain(0.02);
+    k.osc('sawtooth', 46).connect(k.filter('lowpass', 160)).connect(eng).connect(bus);
+    k.lfo(eng.gain, 0.02, 0.012);
+    k.every(7000, 18000, () => {
+      const f = rand(220, 420);
+      const p = rand(-0.7, 0.7);
+      [[1, 1, 1.6], [2.41, 0.4, 1.1], [3.9, 0.2, 0.7], [5.3, 0.12, 0.5]].forEach(([m, a, d]) => k.tone({ freq: f * m, attack: 0.002, decay: d, gain: 0.05 * a, pan: p, dest: bus }));
+    }, 5000);
+    k.every(30000, 70000, () => {
+      const n = Math.floor(rand(3, 7));
+      const p = rand(-0.8, 0.8);
+      for (let i = 0; i < n; i++) k.tone({ freq: 1050, when: i * 0.9, attack: 0.01, hold: 0.32, decay: 0.05, gain: 0.012, pan: p, filter: { type: 'lowpass', freq: 1400 }, dest: bus });
+    }, 12000);
+  };
 })();

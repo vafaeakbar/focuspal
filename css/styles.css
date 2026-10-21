@@ -562,6 +562,12 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 }
 .map-card-name { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
 .map-card-tag { margin: 3px 0 0; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+.map-card-dedication {
+  display: grid; gap: 2px; margin: 10px 0 0; padding: 8px 12px; border-radius: 12px;
+  background: rgba(216, 181, 110, .12); border: 1px solid rgba(216, 181, 110, .35);
+  font: italic 400 13px "Libre Baskerville", Georgia, serif; color: #f1dcae; text-align: center;
+}
+.map-card-dedication .ar { font: 600 14px Cairo, sans-serif; font-style: normal; }
 .map-card-sounds { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 14px; }
 .map-card-sounds span { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,.08); color: var(--muted); }
 .map-card-go { width: 100%; padding: 12px 16px; font-size: 15px; border-radius: 14px; background: var(--loc, var(--accent)); color: #14100a; transition: filter .2s; }

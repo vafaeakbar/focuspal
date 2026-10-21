@@ -137,6 +137,18 @@
         { id: 'coffee', name: 'Coffee corner', vol: 0.35, gain: 4, reverb: 0.25, create: (k, o) => S.espresso(k, o) },
       ],
     },
+    {
+      id: 'henson', name: 'Henson Site Office', emoji: '🏗️', accent: '#d45a47', scene: 'henson', unlock: 0,
+      tagline: 'A site office on a Henson project at dusk: blueprints on the desk, a crane and a substation outside. Build it right, build it once.',
+      dedication: FP.config.henson.dedication,
+      dedicationAr: FP.config.henson.dedicationAr,
+      layers: [
+        { id: 'site', name: 'Construction site', vol: 0.45, gain: 1, reverb: 0.5, create: (k, o) => S.site(k, o) },
+        { id: 'hum', name: 'Substation hum', vol: 0.3, gain: 0.5, create: (k, o) => S.transformer(k, o) },
+        { id: 'ac', name: 'Site-office AC', vol: 0.4, gain: 0.65, create: (k, o) => S.hvac(k, o) },
+        { id: 'plans', name: 'Blueprints', vol: 0.35, gain: 4.7, reverb: 0.2, create: (k, o) => S.pages(k, o) },
+      ],
+    },
   ];
 
   FP.envById = (id) => FP.environments.find((e) => e.id === id) || FP.environments[1];

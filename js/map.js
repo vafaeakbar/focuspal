@@ -23,6 +23,7 @@
     hotel: { x: 178, y: 530, h: 176 },
     mosque: { x: 425, y: 470, h: 176 },
     alajeer: { x: 1092, y: 236, h: 196 },
+    henson: { x: 236, y: 812, h: 172 },
   };
 
   // ---------- geometry helpers ----------
@@ -97,6 +98,7 @@
     [[266, 492], [220, 515], [178, 530]],
     [[420, 332], [430, 400], [425, 470]],
     [[1060, 352], [1078, 300], [1092, 236]],
+    [[430, 662], [340, 740], [236, 812]],
   ];
 
   // ---------- small props ----------
@@ -277,6 +279,34 @@
         <rect x="-64" y="-28" width="128" height="20" fill="url(#glass)"/>
         <rect x="-10" y="-20" width="20" height="20" fill="#2f3b4a"/>
         <rect x="-74" y="-40" width="148" height="5" fill="${b.accent}"/>`;
+    },
+    henson: () => {
+      const hc = FP.config.henson;
+      let zig = '';
+      for (let y = -10; y > -146; y -= 14) zig += `L${y % 28 === -10 ? 56 : 48} ${y - 7} `;
+      return `<ellipse cx="0" cy="3" rx="96" ry="13" fill="rgba(0,0,0,.18)"/>
+        <g stroke="#e0a03a" stroke-width="3" fill="none" stroke-linejoin="round">
+          <path d="M48 0 V-150 M56 0 V-150 M48 -3 ${zig}"/>
+          <path d="M18 -150 H118 M18 -158 H118"/>
+          <path d="M18 -150 L24 -158 L30 -150 L36 -158 L42 -150 L48 -158 L54 -150 L60 -158 L66 -150 L72 -158 L78 -150 L84 -158 L90 -150 L96 -158 L102 -150 L108 -158 L114 -150"/>
+          <path d="M52 -174 L18 -158 M52 -174 L100 -158 M48 -158 L52 -174 L56 -158" stroke-width="2"/>
+        </g>
+        <rect x="16" y="-156" width="14" height="14" fill="#5a6372"/>
+        <path d="M104 -150 V-104" stroke="#3b4a5a" stroke-width="1.5"/>
+        <rect x="92" y="-104" width="24" height="5" fill="${hc.navy}"/>
+        <circle class="blink" cx="52" cy="-178" r="3.5" fill="#ff4d4d"/>
+        <rect x="-74" y="-66" width="112" height="66" fill="#f4f2ec" stroke="${hc.navy}" stroke-width="3"/>
+        <rect x="-74" y="-66" width="112" height="13" fill="${hc.navy}"/>
+        <rect x="-74" y="-17" width="112" height="5" fill="${hc.red}"/>
+        <rect x="-64" y="-46" width="46" height="22" fill="url(#glass)" stroke="${hc.navy}" stroke-width="1.5"/>
+        <rect x="-10" y="-46" width="20" height="34" fill="${hc.navy}"/>
+        <rect x="16" y="-46" width="16" height="22" fill="url(#glass)" stroke="${hc.navy}" stroke-width="1.5"/>
+        <rect x="-60" y="-104" width="42" height="40" rx="4" fill="#fff" stroke="${hc.navy}" stroke-width="2"/>
+        <path d="M-50 -64 V-52 M-28 -64 V-52" stroke="${hc.navy}" stroke-width="2.5"/>
+        <image href="${hc.logo}" x="-55" y="-100" width="32" height="32"/>
+        <rect x="-112" y="-28" width="30" height="28" fill="#8e98a6" stroke="#3b4a5a" stroke-width="2"/>
+        <path d="M-106 -24 v20 M-100 -24 v20 M-94 -24 v20 M-88 -24 v20" stroke="#5f6a78" stroke-width="1.5"/>
+        <g fill="#d6dce4" stroke="#7d8794" stroke-width="1"><ellipse cx="-104" cy="-31" rx="3.5" ry="2"/><ellipse cx="-97" cy="-31" rx="3.5" ry="2"/><ellipse cx="-90" cy="-31" rx="3.5" ry="2"/></g>`;
     },
     space: () => `<ellipse cx="0" cy="2" rx="62" ry="15" fill="#b9c0c7" stroke="#8a939c" stroke-width="3"/>
         <ellipse cx="0" cy="-1" rx="34" ry="7" fill="#9aa3ab"/>
@@ -510,6 +540,22 @@
     el.cardName.textContent = env.name;
     el.cardTag.textContent = env.tagline;
     el.cardSounds.innerHTML = env.layers.map((l) => `<span>${l.name}</span>`).join('');
+    // A place can carry a dedication (English and Arabic on separate lines).
+    el.cardDedication.hidden = !env.dedication;
+    if (env.dedication) {
+      el.cardDedication.innerHTML = '';
+      const en = document.createElement('span');
+      en.textContent = env.dedication;
+      el.cardDedication.appendChild(en);
+      if (env.dedicationAr) {
+        const ar = document.createElement('span');
+        ar.className = 'ar';
+        ar.lang = 'ar';
+        ar.dir = 'rtl';
+        ar.textContent = env.dedicationAr;
+        el.cardDedication.appendChild(ar);
+      }
+    }
     el.cardGo.textContent = info.locked ? '✨ Unlock every place with Premium' : here ? `Back to ${env.name} →` : `Focus here →`;
     el.cardGo.dataset.env = id;
     placeCard(id);
@@ -678,6 +724,7 @@
     el.cardName = document.getElementById('mapCardName');
     el.cardTag = document.getElementById('mapCardTag');
     el.cardSounds = document.getElementById('mapCardSounds');
+    el.cardDedication = document.getElementById('mapCardDedication');
     el.cardGo = document.getElementById('mapCardGo');
     el.cardLock = document.getElementById('mapCardLock');
     el.cardLockText = document.getElementById('mapCardLockText');
