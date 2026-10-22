@@ -346,8 +346,29 @@
         brown: makeNoise(ctx, 'brown'),
       };
 
+      // Let iOS treat FocusPal like a media player: it plays with the silent switch on
+      // and recovers more reliably after interruptions such as phone calls.
+      if (navigator.audioSession) {
+        try { navigator.audioSession.type = 'playback'; } catch (e) { /* not supported */ }
+      }
+      ctx.onstatechange = () => FP.emit('audiostate', ctx.state);
+
       if (ctx.state !== 'running') ctx.resume();
       return true;
+    }
+
+    // Start the audio over with a fresh context. Used when the browser won't resume the old
+    // one after an interruption; call it from a tap or key press. Decoded recordings are reused.
+    rebuild() {
+      const old = this.ctx;
+      this.active.forEach((l) => { try { l.kit.stop(); } catch (e) { /* already stopped */ } });
+      this.active.clear();
+      this.ctx = null;
+      if (old) {
+        old.onstatechange = null;
+        old.close().catch(() => {});
+      }
+      return this.init();
     }
 
     // Recordings ship as base64 inside `audio/<name>.js` so they also load from file://.

@@ -422,19 +422,61 @@
     else releaseWakeLock();
   }
 
-  // After the device wakes or the tab returns, the browser may have paused the audio.
-  // Resume it straight away, or on the next tap/key if the browser insists on one.
+  // After sleep, a phone call or another app's audio, the browser pauses ours. Resume it
+  // straight away, keep retrying for a while (a call can take a moment to let go of the
+  // audio), and if that fails, offer a "tap to resume" button. A tap rebuilds the audio
+  // from scratch when the old one can't be resumed.
+  const audioNeeded = () => audio.ready && settings.soundOn && entered;
+  let resumeTimer = null;
+  let pausedShown = false;
+
   function resumeAudio() {
-    if (!audio.ready || !settings.soundOn || audio.ctx.state === 'running') return;
+    if (!audioNeeded() || audio.ctx.state === 'running') return;
     audio.ctx.resume().catch(() => {});
   }
+
+  function showSoundPaused(on) {
+    pausedShown = on;
+    $('#soundPaused').hidden = !on;
+  }
+
+  function watchAudio() {
+    clearInterval(resumeTimer);
+    if (!audioNeeded() || audio.ctx.state === 'running') { showSoundPaused(false); return; }
+    resumeAudio();
+    let tries = 0;
+    resumeTimer = setInterval(() => {
+      if (!audioNeeded() || audio.ctx.state === 'running') {
+        clearInterval(resumeTimer);
+        showSoundPaused(false);
+        return;
+      }
+      if (document.hidden) return;
+      resumeAudio();
+      if (++tries === 3) showSoundPaused(true);
+      if (tries > 80) clearInterval(resumeTimer);
+    }, 1500);
+  }
+
+  function gestureResume() {
+    if (!audioNeeded() || audio.ctx.state === 'running') return;
+    if (audio.ctx.state === 'interrupted' || pausedShown) {
+      audio.rebuild();
+      unlockAudio();
+    } else {
+      resumeAudio();
+    }
+  }
+
+  window.addEventListener('fp:audiostate', watchAudio);
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) resumeAudio();
+    if (!document.hidden) watchAudio();
     updateWakeLock();
   });
-  window.addEventListener('focus', resumeAudio);
-  window.addEventListener('pageshow', resumeAudio);
-  ['pointerdown', 'keydown', 'touchend'].forEach((ev) => window.addEventListener(ev, resumeAudio, { passive: true }));
+  window.addEventListener('focus', watchAudio);
+  window.addEventListener('pageshow', watchAudio);
+  ['pointerdown', 'keydown', 'touchend'].forEach((ev) => window.addEventListener(ev, gestureResume, { passive: true }));
+  document.getElementById('soundPaused').addEventListener('click', gestureResume);
 
   // ---------- Audio ----------
   const env = () => FP.envById(settings.env);

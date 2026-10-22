@@ -270,6 +270,15 @@ body.zen .tip { opacity: 0; }
 body.zen .intention { background: transparent; }
 body.zen { cursor: none; }
 
+/* Shown only when the browser won't resume sound by itself (e.g. after a phone call). */
+.sound-paused {
+  position: fixed; left: 50%; top: calc(74px + env(safe-area-inset-top, 0px)); z-index: 23; transform: translateX(-50%);
+  padding: 11px 18px; border-radius: 999px; border: 1px solid var(--accent); cursor: pointer;
+  font: 600 14px Inter, sans-serif; color: var(--text);
+  background: var(--glass-strong); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 12px 30px rgba(0,0,0,.4);
+}
+
 /* ---------- Focus mode: the scene and the time, nothing else ---------- */
 .focus-intent { display: none; }
 .focus-hint {
