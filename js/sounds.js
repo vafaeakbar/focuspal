@@ -363,16 +363,17 @@
     });
     k.lfo(lp.frequency, 0.04, 160);
     k.chain(k.noise('brown'), k.filter('lowpass', 160), k.gain(0.25), bus);
-    k.chain(k.noise('pink'), k.filter('bandpass', 700, 3), k.gain(0.025), bus);
+    k.chain(k.noise('pink'), k.filter('bandpass', 480, 2), k.gain(0.012), bus);
   };
 
+  // Slow, low pentatonic swells — soft enough to sit under reading.
   S.shimmer = (k, out) => {
-    const scale = [69, 71, 73, 76, 78, 81, 83, 85, 88];
-    k.every(1800, 5500, () => {
+    const scale = [57, 59, 61, 64, 66, 69, 71, 73];
+    k.every(3500, 8000, () => {
       const m = pick(scale);
-      k.tone({ freq: mtof(m), attack: rand(0.3, 1), hold: 0.2, decay: rand(4, 7), gain: rand(0.02, 0.045), pan: rand(-0.9, 0.9) });
-      if (Math.random() < 0.4) k.tone({ freq: mtof(m + 12), when: 0.1, attack: 0.5, decay: 5, gain: 0.012, pan: rand(-0.9, 0.9) });
-    }, 400);
+      k.tone({ freq: mtof(m), attack: rand(1.5, 3), hold: 0.6, decay: rand(6, 10), gain: rand(0.02, 0.038), pan: rand(-0.7, 0.7) });
+      if (Math.random() < 0.3) k.tone({ freq: mtof(m - 12), when: 0.4, attack: 2, decay: 7, gain: 0.012, pan: rand(-0.7, 0.7) });
+    }, 1500);
   };
 
   S.engine = (k, out) => {
@@ -381,10 +382,10 @@
     k.osc('sine', 36).connect(g).connect(out);
     k.lfo(g.gain, 0.21, 0.04);
     k.osc('triangle', 72.4).connect(k.filter('lowpass', 200)).connect(k.gain(0.025)).connect(out);
-    k.every(15000, 40000, () => {
-      const f = pick([880, 1046.5, 1318.5]);
-      [0, 0.18].forEach((w) => k.tone({ freq: f, when: w, attack: 0.005, hold: 0.06, decay: 0.08, gain: 0.012, pan: rand(-0.6, 0.6) }));
-    });
+    k.every(30000, 70000, () => {
+      const f = pick([392, 440, 523.25]);
+      [0, 0.6].forEach((w, i) => k.tone({ freq: f * (i ? 1.25 : 1), when: w, attack: 0.08, hold: 0.1, decay: 1.2, gain: 0.008, pan: rand(-0.5, 0.5) }));
+    }, 20000);
   };
 
   // ---------- Music ----------
