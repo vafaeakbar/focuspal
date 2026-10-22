@@ -296,15 +296,20 @@
       if (!silent) {
         // Now that the break has begun: a deferred Friday card, or a milestone card.
         if (!maybeShowFridayDua(4500)) maybeShowDua();
-        announce('Focus session complete! 🎉', `Time for a ${next === 'long' ? 'long' : 'short'} break: ${minutesFor(next)} minutes.`, 'break');
         if (settings.autoBreaks) start();
+        const kind = `${minutesFor(next)}-minute ${next === 'long' ? 'long ' : ''}break`;
+        announce('Time for a break', timer.running
+          ? `Focus session complete. Your ${kind} has started.`
+          : `Focus session complete. Time for a ${kind}.`, 'break');
       }
     } else {
       if (finished === 'long') timer.cycle = 0;
       setMode('focus');
       if (!silent) {
-        announce('Break’s over.', 'Ready for another focus session?', 'focus');
         if (settings.autoFocus) start();
+        announce(timer.running ? 'Back to focus' : 'Break’s over', timer.running
+          ? `Your ${minutesFor('focus')}-minute focus session has started.`
+          : 'Ready for your next focus session?', 'focus');
       }
     }
     updateWakeLock();
@@ -334,7 +339,8 @@
     el.miniTime.textContent = fmt(r);
     el.miniBar.style.width = `${progress * 100}%`;
     const label = timer.running || r !== timer.total ? `${fmt(r)} · ${MODE_NAMES[timer.mode]}` : null;
-    document.title = label ? `${label} — FocusPal` : 'FocusPal';
+    const bell = alertTitle ? `🔔 ${alertTitle} · ` : '';
+    document.title = bell + (label ? `${label} — FocusPal` : 'FocusPal');
     FP.map.setTimer(label ? `${timer.running ? '⏱' : '⏸'} ${MODE_NAMES[timer.mode]} · ${fmt(r)}` : '');
   }
 
@@ -393,13 +399,75 @@
     toastTimer = setTimeout(() => el.toast.classList.remove('show'), 3800);
   }
 
+  // A phase change (break started / break over) gets an alert that stays until acknowledged,
+  // a double chime, a vibration where supported, a 🔔 in the tab title and, if allowed,
+  // a system notification when FocusPal isn't on screen.
+  let alertTitle = '';
   function announce(title, body, chimeKind) {
-    toast(`${title} ${body}`);
-    if (settings.chime) audio.chime(chimeKind);
+    showPhaseAlert(title, body, chimeKind);
+    if (settings.chime) {
+      audio.chime(chimeKind);
+      setTimeout(() => { if (alertTitle) audio.chime(chimeKind); }, 1700);
+    }
+    try { if (navigator.vibrate) navigator.vibrate([200, 120, 200]); } catch (e) { /* not allowed */ }
     if (settings.notify && 'Notification' in window && Notification.permission === 'granted' && document.hidden) {
-      try { new Notification(title, { body, tag: 'focuspal', silent: true }); } catch (e) { /* unsupported */ }
+      try { new Notification(title, { body, tag: 'focuspal' }); } catch (e) { /* unsupported */ }
     }
   }
+
+  function showPhaseAlert(title, body, chimeKind) {
+    const box = $('#phaseAlert');
+    const isBreak = chimeKind === 'break';
+    const waiting = !timer.running;
+    alertTitle = title;
+    $('#phaseAlertIcon').textContent = isBreak ? (timer.mode === 'long' ? '🌿' : '☕') : '🎯';
+    $('#phaseAlertTitle').textContent = title;
+    $('#phaseAlertText').textContent = body;
+    const tip = $('#phaseAlertTip');
+    tip.hidden = !isBreak;
+    if (isBreak) tip.textContent = `${el.tipIcon.textContent} ${el.tipText.textContent}`;
+    $('#phaseAlertPrimary').textContent = waiting ? (isBreak ? 'Start break' : 'Start focusing') : 'Got it';
+    $('#phaseAlertPrimary').dataset.start = waiting ? '1' : '';
+    $('#phaseAlertSecondary').hidden = !waiting;
+    $('#phaseAlertSecondary').textContent = isBreak ? 'Later' : 'Not yet';
+    $('#phaseAlertNotify').hidden = !('Notification' in window) || settings.notify || Notification.permission === 'denied';
+    exitZen();
+    box.hidden = false;
+    requestAnimationFrame(() => box.classList.add('show'));
+    renderTime();
+    setTimeout(() => $('#phaseAlertPrimary').focus({ preventScroll: true }), 60);
+  }
+
+  function closePhaseAlert() {
+    const box = $('#phaseAlert');
+    if (box.hidden) return;
+    alertTitle = '';
+    box.classList.remove('show');
+    setTimeout(() => { box.hidden = true; }, 300);
+    renderTime();
+    scheduleZen();
+  }
+  $('#phaseAlertPrimary').addEventListener('click', () => {
+    const startNow = $('#phaseAlertPrimary').dataset.start === '1';
+    closePhaseAlert();
+    if (startNow && !timer.running) start();
+  });
+  $('#phaseAlertSecondary').addEventListener('click', closePhaseAlert);
+  $('#phaseAlertNotify').addEventListener('click', async () => {
+    let ok = Notification.permission === 'granted';
+    if (!ok) { try { ok = (await Notification.requestPermission()) === 'granted'; } catch (e) { ok = false; } }
+    if (ok) {
+      settings.notify = true;
+      saveSettings();
+      const box = $('[data-setting="notify"]');
+      if (box) box.checked = true;
+      $('#phaseAlertNotify').hidden = true;
+      toast('🔔 Notifications on. You’ll be told when breaks start and end.');
+    } else {
+      toast('Notifications are blocked. You can allow them in your browser’s site settings.');
+      $('#phaseAlertNotify').hidden = true;
+    }
+  });
 
   // ---------- Wake lock & keeping sound alive ----------
   // Keep the screen awake whenever FocusPal is doing something: a running timer
@@ -1155,6 +1223,10 @@
     const tag = (ev.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || ev.metaKey || ev.ctrlKey || ev.altKey) return;
     const key = ev.key.toLowerCase();
+    if (!$('#phaseAlert').hidden) {
+      if (key === 'escape') closePhaseAlert();
+      return;
+    }
     if (FP.avatar.isOpen) {
       if (key === 'escape') FP.avatar.close();
       return;

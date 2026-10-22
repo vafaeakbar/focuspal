@@ -270,6 +270,32 @@ body.zen .tip { opacity: 0; }
 body.zen .intention { background: transparent; }
 body.zen { cursor: none; }
 
+/* Break / focus change alert: stays until acknowledged. */
+.phase-alert {
+  position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; padding: 16px;
+  background: rgba(5, 8, 14, .45); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  opacity: 0; transition: opacity .3s ease;
+}
+.phase-alert.show { opacity: 1; }
+.phase-alert-card {
+  width: min(400px, 100%); padding: 26px 24px 20px; border-radius: 26px; text-align: center;
+  background: var(--glass-strong); border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  transform: translateY(10px) scale(.97); transition: transform .35s var(--ease);
+}
+.phase-alert.show .phase-alert-card { transform: none; }
+.phase-alert-icon { font-size: 44px; line-height: 1; margin-bottom: 8px; animation: alert-pop .6s var(--ease); }
+@keyframes alert-pop { 0% { transform: scale(.4); } 70% { transform: scale(1.15); } 100% { transform: none; } }
+.phase-alert h2 { margin: 0 0 6px; font-size: 24px; letter-spacing: -0.02em; }
+.phase-alert p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+.phase-alert-tip { margin-top: 12px !important; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.06); font-size: 14px !important; }
+.phase-alert-actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+.phase-alert-actions .btn { min-width: 130px; padding: 12px 18px; font-size: 15px; border-radius: 14px; }
+.phase-alert-actions .btn.ghost { margin: 0; }
+.phase-alert-notify { margin-top: 14px; border: 0; background: none; color: var(--muted); font: 500 13px Inter, sans-serif; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.phase-alert-notify:hover { color: var(--text); }
+
 /* Shown only when the browser won't resume sound by itself (e.g. after a phone call). */
 .sound-paused {
   position: fixed; left: 50%; top: calc(74px + env(safe-area-inset-top, 0px)); z-index: 23; transform: translateX(-50%);

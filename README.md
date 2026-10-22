@@ -11,7 +11,8 @@ A focus timer with immersive environments. Pick a place on the island map, choos
 - **Island map:** start on an illustrated map, pick a landmark, and your pin travels there before zooming into the scene. Open it again any time with the Map button or `M`.
 - **14 environments:** Deep Space, Busy Café, Old Library, Late-night Diner, Sunny Garden, Rainy Dorm, Calm Office, Ocean Sunset, Fireside Cabin, Airport Café, Grand Hotel Lobby, Courtyard Library (a library in a mosque courtyard), Alajeer HQ and Henson Site Office. Each has an animated scene and a mixable soundscape.
 - **Audio:** café, diner and office crowds are real public-domain recordings; everything else is synthesized live with the Web Audio API.
-- Break suggestions (20-20-20 eye rule, movement, hydration), chimes, desktop notifications, auto-start, ambience that softens on breaks.
+- **Clear break alerts:** when a break starts or ends, an alert stays on screen until you tap it (with a break tip, or "Start focusing"), plus a double chime, a vibration on Android, a 🔔 in the tab title, and an optional system notification.
+- Break suggestions (20-20-20 eye rule, movement, hydration), auto-start, ambience that softens on breaks.
 - **Calm focus & immersion levels:** while you focus, the scene slowly dims, softens and slows so nothing pulls your eye; breaks bring it fully back to life. Choose *Calm* (nearly still, and crowd voices are turned down and muffled so words can’t be followed: best for reading and exams), *Balanced* (default) or *Immersive* (full motion) in the Timer panel or press `I`.
 - **Focus mode (`Z`):** full screen with no buttons, just the scene, the time and what you're working on. Esc or double-click (double-tap on phones) to leave.
 - **Night lighting:** a moon button (or `D`) dims every scene with a soft moonlit tint; remembered between visits.

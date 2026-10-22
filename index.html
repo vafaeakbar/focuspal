@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Noto+Kufi+Arabic:wght@400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cairo:wght@600&family=Pacifico&display=swap" rel="stylesheet">
   <!-- Bump ?v= on every release so browsers fetch the new files. -->
-  <link rel="stylesheet" href="css/styles.css?v=20261022b">
+  <link rel="stylesheet" href="css/styles.css?v=20261022c">
 </head>
 <body data-mode="focus">
   <canvas id="scene" aria-hidden="true"></canvas>
@@ -101,6 +101,20 @@
       </div>
     </section>
   </main>
+
+  <div class="phase-alert" id="phaseAlert" role="alertdialog" aria-modal="true" aria-labelledby="phaseAlertTitle" aria-describedby="phaseAlertText" hidden>
+    <div class="phase-alert-card">
+      <div class="phase-alert-icon" id="phaseAlertIcon" aria-hidden="true">☕</div>
+      <h2 id="phaseAlertTitle">Time for a break</h2>
+      <p id="phaseAlertText"></p>
+      <p class="phase-alert-tip" id="phaseAlertTip" hidden></p>
+      <div class="phase-alert-actions">
+        <button class="btn" id="phaseAlertPrimary">Got it</button>
+        <button class="btn ghost" id="phaseAlertSecondary" hidden>Not yet</button>
+      </div>
+      <button class="phase-alert-notify" id="phaseAlertNotify" hidden>🔔 Also notify me when FocusPal is in the background</button>
+    </div>
+  </div>
 
   <button class="sound-paused" id="soundPaused" hidden>🔈 Sound paused · Tap to resume</button>
 
@@ -328,14 +342,14 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20261022b"></script>
-  <script src="js/audio.js?v=20261022b"></script>
-  <script src="js/sounds.js?v=20261022b"></script>
-  <script src="js/scenes.js?v=20261022b"></script>
-  <script src="js/environments.js?v=20261022b"></script>
-  <script src="js/avatar.js?v=20261022b"></script>
-  <script src="js/premium.js?v=20261022b"></script>
-  <script src="js/map.js?v=20261022b"></script>
-  <script src="js/app.js?v=20261022b"></script>
+  <script src="js/config.js?v=20261022c"></script>
+  <script src="js/audio.js?v=20261022c"></script>
+  <script src="js/sounds.js?v=20261022c"></script>
+  <script src="js/scenes.js?v=20261022c"></script>
+  <script src="js/environments.js?v=20261022c"></script>
+  <script src="js/avatar.js?v=20261022c"></script>
+  <script src="js/premium.js?v=20261022c"></script>
+  <script src="js/map.js?v=20261022c"></script>
+  <script src="js/app.js?v=20261022c"></script>
 </body>
 </html>
