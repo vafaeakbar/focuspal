@@ -231,7 +231,7 @@
     timer.endAt = Date.now() + timer.remaining * 1000;
     timer.running = true;
     saveTimer();
-    requestWakeLock();
+    updateWakeLock();
     render();
     scheduleZen();
   }
@@ -240,7 +240,7 @@
     timer.remaining = Math.max(0, Math.ceil((timer.endAt - Date.now()) / 1000));
     timer.running = false;
     saveTimer();
-    releaseWakeLock();
+    updateWakeLock();
     exitZen();
     render();
   }
@@ -249,7 +249,7 @@
     timer.running = false;
     timer.remaining = timer.total;
     saveTimer();
-    releaseWakeLock();
+    updateWakeLock();
     exitZen();
     render();
   }
@@ -263,7 +263,7 @@
       if (timer.mode === 'long') timer.cycle = 0;
       setMode('focus');
     }
-    releaseWakeLock();
+    updateWakeLock();
     exitZen();
   }
 
@@ -307,7 +307,8 @@
         if (settings.autoFocus) start();
       }
     }
-    if (!timer.running) { releaseWakeLock(); exitZen(); }
+    updateWakeLock();
+    if (!timer.running) exitZen();
   }
 
   const currentRemaining = () => (timer.running ? Math.max(0, Math.ceil((timer.endAt - Date.now()) / 1000)) : timer.remaining);
@@ -400,10 +401,14 @@
     }
   }
 
-  // ---------- Wake lock ----------
+  // ---------- Wake lock & keeping sound alive ----------
+  // Keep the screen awake whenever FocusPal is doing something: a running timer
+  // (focus or break) or sounds playing. If the device sleeps, browsers stop all audio.
   let wakeLock = null;
+  const wantWakeLock = () => settings.wakeLock && !document.hidden
+    && (timer.running || (entered && settings.soundOn && audio.active.size > 0));
   async function requestWakeLock() {
-    if (!settings.wakeLock || timer.mode !== 'focus' || !('wakeLock' in navigator) || wakeLock) return;
+    if (!('wakeLock' in navigator) || wakeLock) return;
     try {
       wakeLock = await navigator.wakeLock.request('screen');
       wakeLock.addEventListener('release', () => { wakeLock = null; });
@@ -412,9 +417,24 @@
   function releaseWakeLock() {
     if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
   }
+  function updateWakeLock() {
+    if (wantWakeLock()) requestWakeLock();
+    else releaseWakeLock();
+  }
+
+  // After the device wakes or the tab returns, the browser may have paused the audio.
+  // Resume it straight away, or on the next tap/key if the browser insists on one.
+  function resumeAudio() {
+    if (!audio.ready || !settings.soundOn || audio.ctx.state === 'running') return;
+    audio.ctx.resume().catch(() => {});
+  }
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && timer.running) requestWakeLock();
+    if (!document.hidden) resumeAudio();
+    updateWakeLock();
   });
+  window.addEventListener('focus', resumeAudio);
+  window.addEventListener('pageshow', resumeAudio);
+  ['pointerdown', 'keydown', 'touchend'].forEach((ev) => window.addEventListener(ev, resumeAudio, { passive: true }));
 
   // ---------- Audio ----------
   const env = () => FP.envById(settings.env);
@@ -443,6 +463,7 @@
     });
     [...audio.active.keys()].forEach((k) => { if (!keys.has(k)) audio.stopLayer(k); });
     applyDuck();
+    updateWakeLock();
   }
 
   function applyDuck() {
@@ -456,6 +477,7 @@
     document.body.classList.toggle('sound-off', !on);
     if (on) unlockAudio();
     else audio.stopAll(0.8);
+    updateWakeLock();
   }
 
   // ---------- Scenes ----------
@@ -748,7 +770,7 @@
       }
       if (key === 'dimBreaks') applyDuck();
       if (key === 'sceneDark') applyNight();
-      if (key === 'wakeLock') { if (input.checked && timer.running) requestWakeLock(); else releaseWakeLock(); }
+      if (key === 'wakeLock') updateWakeLock();
       saveSettings();
     });
   });
@@ -1044,7 +1066,7 @@
   el.skip.addEventListener('click', skip);
   $$('.mode-tabs button').forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.mode === timer.mode && !timer.running) return;
-    releaseWakeLock();
+    updateWakeLock();
     exitZen();
     setMode(b.dataset.mode);
   }));
@@ -1193,5 +1215,5 @@
   window.addEventListener('keydown', firstGesture);
 
   // Small debug hook for the console.
-  FP.app = { settings, timer, start, pause, skip, complete };
+  FP.app = { settings, timer, start, pause, skip, complete, get awake() { return !!wakeLock; } };
 })();
