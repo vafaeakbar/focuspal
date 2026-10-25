@@ -150,6 +150,17 @@
         { id: 'plans', name: 'Blueprints', vol: 0.35, gain: 4.7, reverb: 0.2, create: (k, o) => S.pages(k, o) },
       ],
     },
+    {
+      id: 'spa', name: 'Hammam Spa', emoji: '🧖', accent: '#7cc6b8', scene: 'spa', unlock: 0,
+      tagline: 'Warm stone, mosaic tiles and steam under a starlit dome, with a trickling fountain and the hum of a singing bowl.',
+      layers: [
+        { id: 'fountain', name: 'Basin fountain', vol: 0.4, gain: 1.1, reverb: 0.4, create: (k, o) => S.water(k, o, { lp: 2400, level: 0.8 }) },
+        { id: 'steam', name: 'Steam', vol: 0.35, gain: 2.5, create: (k, o) => S.steam(k, o) },
+        { id: 'bowls', name: 'Singing bowls', vol: 0.4, gain: 1.2, reverb: 0.8, create: (k, o) => S.bowl(k, o) },
+        { id: 'drips', name: 'Echoing drips', vol: 0.3, gain: 3.5, reverb: 0.9, create: (k, o) => S.drips(k, o) },
+        { id: 'warmth', name: 'Warm hum', vol: 0.25, gain: 0.16, reverb: 0.4, create: (k, o) => S.drone(k, o, { root: 65.41 }) },
+      ],
+    },
   ];
 
   FP.envById = (id) => FP.environments.find((e) => e.id === id) || FP.environments[1];

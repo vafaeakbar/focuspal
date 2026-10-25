@@ -350,6 +350,42 @@
     }, 4000);
   };
 
+  // ---------- Spa ----------
+
+  // Soft steam: an airy hiss that swells slowly, with the odd sigh from a steam vent.
+  S.steam = (k, out) => {
+    const hp = k.filter('highpass', 900, 0.5);
+    const lp = k.filter('lowpass', 5200, 0.5);
+    const g = k.gain(0.12);
+    k.chain(k.noise('pink'), hp, lp, g, out);
+    k.lfo(g.gain, 0.05, 0.05);
+    k.lfo(lp.frequency, 0.03, 1200);
+    k.every(25000, 60000, () => {
+      k.burst({ type: 'pink', attack: rand(1.5, 2.5), hold: rand(1, 3), decay: rand(3, 5), gain: rand(0.05, 0.08), filter: 'bandpass', freq: rand(2500, 3500), Q: 0.6, to: rand(1800, 2400), pan: rand(-0.5, 0.5) });
+    }, 8000);
+  };
+
+  // Singing bowls struck now and then: inharmonic partials, each a slowly beating pair.
+  const BOWL = [[1, 0.05, 1], [2.76, 0.022, 0.62], [5.4, 0.009, 0.38], [8.93, 0.004, 0.24]];
+  S.bowl = (k, out) => {
+    k.every(18000, 40000, () => {
+      const f = pick([196, 220, 261.63, 293.66]);
+      const life = rand(9, 13);
+      const pan = rand(-0.6, 0.6);
+      BOWL.forEach(([m, g, d]) => {
+        [-1.5, 1.5].forEach((beat) => k.tone({ freq: f * m + beat, attack: 0.015, decay: life * d, gain: g * rand(0.8, 1), pan }));
+      });
+    }, 3000);
+  };
+
+  // Drips falling into still water, echoing off stone.
+  S.drips = (k, out) => {
+    k.every(1400, 5200, () => {
+      const f = rand(900, 1700);
+      k.tone({ freq: f, to: f * rand(1.6, 2.3), glide: 0.05, attack: 0.002, decay: rand(0.06, 0.12), gain: rand(0.02, 0.045), pan: rand(-0.7, 0.7) });
+    });
+  };
+
   // ---------- Space ----------
 
   S.drone = (k, out, { root = 55 } = {}) => {

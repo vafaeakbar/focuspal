@@ -24,6 +24,7 @@
     mosque: { x: 425, y: 470, h: 176 },
     alajeer: { x: 1092, y: 236, h: 196 },
     henson: { x: 236, y: 812, h: 172 },
+    spa: { x: 540, y: 850, h: 118 },
   };
 
   // ---------- geometry helpers ----------
@@ -99,6 +100,7 @@
     [[420, 332], [430, 400], [425, 470]],
     [[1060, 352], [1078, 300], [1092, 236]],
     [[430, 662], [340, 740], [236, 812]],
+    [[430, 662], [492, 760], [540, 850]],
   ];
 
   // ---------- small props ----------
@@ -307,6 +309,24 @@
         <rect x="-112" y="-28" width="30" height="28" fill="#8e98a6" stroke="#3b4a5a" stroke-width="2"/>
         <path d="M-106 -24 v20 M-100 -24 v20 M-94 -24 v20 M-88 -24 v20" stroke="#5f6a78" stroke-width="1.5"/>
         <g fill="#d6dce4" stroke="#7d8794" stroke-width="1"><ellipse cx="-104" cy="-31" rx="3.5" ry="2"/><ellipse cx="-97" cy="-31" rx="3.5" ry="2"/><ellipse cx="-90" cy="-31" rx="3.5" ry="2"/></g>`;
+    },
+    spa: () => {
+      let stars = '';
+      [[-22, -78], [-8, -92], [8, -92], [22, -78], [0, -76]].forEach(([x, y]) => { stars += `<path d="M${x} ${y - 4} L${x + 1.3} ${y - 1.3} L${x + 4} ${y} L${x + 1.3} ${y + 1.3} L${x} ${y + 4} L${x - 1.3} ${y + 1.3} L${x - 4} ${y} L${x - 1.3} ${y - 1.3}Z" fill="#fff6dc"/>`; });
+      return `<ellipse cx="0" cy="3" rx="92" ry="13" fill="rgba(0,0,0,.18)"/>
+        <g class="vapor" fill="#fff" opacity=".85"><circle cx="-6" cy="-112" r="9"/><circle cx="8" cy="-118" r="7"/><circle cx="-52" cy="-66" r="6"/><circle cx="54" cy="-64" r="6"/></g>
+        <rect x="-78" y="-46" width="156" height="46" fill="#efdcc0" stroke="#8a6b48" stroke-width="3"/>
+        <rect x="-78" y="-14" width="156" height="14" fill="#2a7f86"/>
+        <path d="M-78 -14 h156" stroke="#f1e6cc" stroke-width="2" stroke-dasharray="6 6"/>
+        <path d="M-66 -46 C-66 -66 -38 -66 -38 -46Z M38 -46 C38 -66 66 -66 66 -46Z" fill="#cfa77c" stroke="#8a6b48" stroke-width="2.5"/>
+        <path d="M-40 -46 C-40 -92 40 -92 40 -46Z" fill="#e8c9a2" stroke="#8a6b48" stroke-width="3"/>
+        <path d="M-28 -60 C-26 -74 -16 -82 -8 -84" stroke="rgba(255,255,255,.5)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        ${stars}
+        <path d="M-12 0 V-22 Q-12 -32 0 -36 Q12 -32 12 -22 V0Z" fill="#1f6f78" stroke="#14484e" stroke-width="2"/>
+        <circle cx="6" cy="-14" r="1.8" fill="#d9a64a"/>
+        <path d="M-58 -24 h18 M40 -24 h18" stroke="#8a6b48" stroke-width="2"/>
+        <g transform="translate(-50 -30)"><path d="M0 -10 Q-6 -16 0 -22 Q6 -16 0 -10" fill="#9fd3c7"/></g>
+        ${palm(84, 2, 0.5)}`;
     },
     space: () => `<ellipse cx="0" cy="2" rx="62" ry="15" fill="#b9c0c7" stroke="#8a939c" stroke-width="3"/>
         <ellipse cx="0" cy="-1" rx="34" ry="7" fill="#9aa3ab"/>

@@ -3187,4 +3187,332 @@
       },
     };
   };
+
+  // ======================================================================
+  // HAMMAM SPA
+  // ======================================================================
+  // Eight-pointed star outline, used for the skylights cut into the dome.
+  function starPath(c, x, y, r) {
+    c.beginPath();
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * TAU - Math.PI / 2;
+      const rr = k % 2 ? r * 0.55 : r;
+      c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    c.closePath();
+  }
+
+  scenes.spa = (w, h, dpr) => {
+    const spring = h * 0.26;
+    const floorY = h * 0.76;
+    const side = Math.max(70, w * 0.16);
+    const nicheL = { x0: side * 0.35, x1: side * 0.35 + Math.max(90, w * 0.13) };
+    const nicheR = { x0: w - side * 0.35 - Math.max(90, w * 0.13), x1: w - side * 0.35 };
+    const bx = (nicheL.x0 + nicheL.x1) / 2;
+    const by = floorY - 6;
+    const tapY = floorY - h * 0.17;
+    // skylights spread across the dome, avoiding the very centre (the timer sits below it)
+    const lights = [];
+    const rows = [[0.05, 7], [0.13, 6], [0.2, 5]];
+    rows.forEach(([fy, n], ri) => {
+      for (let i = 0; i < n; i++) {
+        const fx = (i + 0.5) / n;
+        lights.push({ x: w * (0.06 + fx * 0.88), y: h * fy, r: Math.max(5, Math.min(w, h) * (0.012 - ri * 0.002)), ph: rand(0, TAU) });
+      }
+    });
+
+    const room = layer(w, h, dpr, (c) => {
+      // the dome: warm plaster darkening towards the top
+      c.fillStyle = vGrad(c, 0, spring, [[0, '#6e5040'], [1, '#b58d6c']]);
+      c.fillRect(0, 0, w, spring + 2);
+      // ribs of the dome converging above the room
+      c.strokeStyle = 'rgba(70,45,30,0.25)';
+      c.lineWidth = 2;
+      for (let i = -6; i <= 6; i++) {
+        c.beginPath();
+        c.moveTo(w / 2 + i * w * 0.1, spring);
+        c.quadraticCurveTo(w / 2 + i * w * 0.05, spring * 0.4, w / 2, -h * 0.2);
+        c.stroke();
+      }
+      // star skylights, glowing with daylight
+      for (const l of lights) {
+        glow(c, l.x, l.y, l.r * 5, 'rgba(255,244,214,A)', 0.35);
+        c.fillStyle = '#fff8e6';
+        starPath(c, l.x, l.y, l.r);
+        c.fill();
+      }
+      // springline cornice
+      c.fillStyle = '#8f6a4f';
+      c.fillRect(0, spring - 4, w, 10);
+      c.fillStyle = 'rgba(255,235,200,0.35)';
+      c.fillRect(0, spring + 6, w, 2);
+      // stone walls
+      c.fillStyle = vGrad(c, spring + 6, floorY, [[0, '#e6cba9'], [1, '#d3ae88']]);
+      c.fillRect(0, spring + 6, w, floorY - spring - 6);
+      c.strokeStyle = 'rgba(120,85,55,0.12)';
+      c.lineWidth = 1;
+      for (let y = spring + 40, row = 0; y < floorY; y += 34, row++) {
+        c.beginPath();
+        c.moveTo(0, y);
+        c.lineTo(w, y);
+        c.stroke();
+        for (let x = (row % 2) * 60; x < w; x += 120) {
+          c.beginPath();
+          c.moveTo(x, y - 34);
+          c.lineTo(x, y);
+          c.stroke();
+        }
+      }
+      // mosaic frieze and dado
+      const tile = starTile(30, '#1f6f78', '#f1e6cc', '#c4543c');
+      const friezeY = spring + h * 0.06;
+      c.fillStyle = c.createPattern(tile, 'repeat');
+      c.fillRect(0, friezeY, w, 30);
+      c.fillStyle = '#8f6a4f';
+      c.fillRect(0, friezeY - 3, w, 3);
+      c.fillRect(0, friezeY + 30, w, 3);
+      const dadoTop = floorY - h * 0.12;
+      c.fillStyle = c.createPattern(starTile(36, '#2a7f86', '#eef3ee', '#d7a54b'), 'repeat');
+      c.fillRect(0, dadoTop, w, floorY - dadoTop);
+      c.fillStyle = '#e9dcc4';
+      c.fillRect(0, dadoTop - 6, w, 6);
+      // two arched niches in the side walls
+      [nicheL, nicheR].forEach((n) => {
+        const apex = friezeY + 50;
+        const sp = apex + (n.x1 - n.x0) * 0.6;
+        c.fillStyle = vGrad(c, apex, floorY, [[0, '#9c7556'], [1, '#b98f6c']]);
+        c.beginPath();
+        archPath(c, n.x0, n.x1, apex, sp, floorY);
+        c.fill();
+        c.strokeStyle = '#7a5a40';
+        c.lineWidth = 5;
+        c.beginPath();
+        archPath(c, n.x0, n.x1, apex, sp, floorY);
+        c.stroke();
+        glow(c, (n.x0 + n.x1) / 2, sp, (n.x1 - n.x0) * 0.9, 'rgba(255,190,120,A)', 0.22);
+      });
+      // marble floor with perspective joints
+      c.fillStyle = vGrad(c, floorY, h, [[0, '#e9dfcf'], [1, '#f6f0e6']]);
+      c.fillRect(0, floorY, w, h - floorY);
+      c.strokeStyle = 'rgba(140,115,90,0.22)';
+      for (let i = -14; i <= 14; i++) {
+        c.beginPath();
+        c.moveTo(w / 2 + i * 34, floorY);
+        c.lineTo(w / 2 + i * 220, h);
+        c.stroke();
+      }
+      for (let k = 1; k < 5; k++) {
+        const y = floorY + (h - floorY) * Math.pow(k / 5, 1.5);
+        c.beginPath();
+        c.moveTo(0, y);
+        c.lineTo(w, y);
+        c.stroke();
+      }
+      c.fillStyle = 'rgba(0,0,0,0.12)';
+      c.fillRect(0, floorY, w, 4);
+      // the heated marble platform in the middle of the room
+      const px = w / 2, py = floorY + (h - floorY) * 0.55, prx = Math.min(w * 0.3, 360), pry = (h - floorY) * 0.28;
+      c.fillStyle = '#cfc2ad';
+      c.beginPath();
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * TAU + Math.PI / 8;
+        c.lineTo(px + Math.cos(a) * prx, py + 12 + Math.sin(a) * pry);
+      }
+      c.fill();
+      c.fillStyle = '#f4ede1';
+      c.beginPath();
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * TAU + Math.PI / 8;
+        c.lineTo(px + Math.cos(a) * prx, py + Math.sin(a) * pry);
+      }
+      c.fill();
+      c.strokeStyle = 'rgba(160,135,105,0.35)';
+      c.lineWidth = 1.5;
+      c.save();
+      c.translate(px, py);
+      c.scale(1, pry / prx);
+      c.translate(-px, -py);
+      starPath(c, px, py, prx * 0.4);
+      c.restore();
+      c.stroke();
+      // marble basin (kurna) with a brass tap, in the left niche
+      c.fillStyle = 'rgba(60,40,25,0.18)';
+      c.beginPath();
+      c.ellipse(bx + 4, by + 6, 62, 12, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = '#f2ece2';
+      c.beginPath();
+      c.moveTo(bx - 56, by - 40);
+      c.quadraticCurveTo(bx - 52, by + 4, bx, by + 4);
+      c.quadraticCurveTo(bx + 52, by + 4, bx + 56, by - 40);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#d9cfbf';
+      c.beginPath();
+      c.ellipse(bx, by - 40, 56, 11, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = '#7cc6c0';
+      c.beginPath();
+      c.ellipse(bx, by - 39, 46, 7, 0, 0, TAU);
+      c.fill();
+      c.strokeStyle = '#b8892f';
+      c.lineWidth = 6;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(bx - 4, tapY - 24);
+      c.lineTo(bx - 4, tapY);
+      c.quadraticCurveTo(bx - 4, tapY + 8, bx + 8, tapY + 8);
+      c.stroke();
+      c.fillStyle = '#d9a64a';
+      c.beginPath();
+      c.arc(bx - 4, tapY - 26, 7, 0, TAU);
+      c.fill();
+      // rolled towels and a eucalyptus plant in the right niche
+      const tx = (nicheR.x0 + nicheR.x1) / 2;
+      c.fillStyle = '#8a6440';
+      c.fillRect(nicheR.x0 + 10, floorY - h * 0.2, nicheR.x1 - nicheR.x0 - 20, 7);
+      const tr = Math.max(9, (nicheR.x1 - nicheR.x0) * 0.1);
+      const towels = ['#f7f4ee', '#9fd3c7', '#f7f4ee', '#e7b7a0', '#f7f4ee', '#9fd3c7'];
+      let ti = 0;
+      for (let row = 0; row < 3; row++) {
+        for (let i = 0; i < 3 - row; i++) {
+          const x = tx + (i - (2 - row) / 2) * tr * 2.1;
+          const y = floorY - h * 0.2 - tr - row * tr * 1.8;
+          c.fillStyle = towels[ti++ % towels.length];
+          c.beginPath();
+          c.arc(x, y, tr, 0, TAU);
+          c.fill();
+          c.strokeStyle = 'rgba(90,70,50,0.25)';
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.arc(x, y, tr * 0.55, 0, TAU * 0.8);
+          c.stroke();
+        }
+      }
+      const potX = nicheR.x1 - 6, potY = floorY + 30;
+      c.fillStyle = '#b5603d';
+      c.beginPath();
+      c.moveTo(potX - 22, potY - 34);
+      c.lineTo(potX + 22, potY - 34);
+      c.lineTo(potX + 16, potY);
+      c.lineTo(potX - 16, potY);
+      c.fill();
+      c.strokeStyle = '#6f8f6a';
+      c.lineWidth = 2;
+      c.fillStyle = '#8fb59a';
+      for (let i = 0; i < 6; i++) {
+        const ang = -Math.PI / 2 + (i - 2.5) * 0.28;
+        const len = rand(60, 95);
+        const ex = potX + Math.cos(ang) * len, ey = potY - 34 + Math.sin(ang) * len;
+        c.beginPath();
+        c.moveTo(potX, potY - 34);
+        c.quadraticCurveTo(potX + Math.cos(ang) * len * 0.5 + 6, potY - 34 + Math.sin(ang) * len * 0.5, ex, ey);
+        c.stroke();
+        for (let k = 1; k <= 5; k++) {
+          const f = k / 6;
+          const lx = potX + (ex - potX) * f, ly = potY - 34 + (ey - potY + 34) * f;
+          c.beginPath();
+          c.ellipse(lx, ly, 6, 4.5, ang, 0, TAU);
+          c.fill();
+        }
+      }
+    });
+
+    // light shafts falling from the skylights
+    const shafts = lights.filter((_, i) => i % 3 === 1).map((l) => ({ x: l.x, y: l.y, ph: rand(0, TAU) }));
+    const shaftLen = floorY - spring + h * 0.15;
+    const candles = [
+      { x: nicheR.x0 - 24, y: floorY + 22 }, { x: nicheR.x0 - 6, y: floorY + 34 },
+      { x: nicheL.x1 + 26, y: floorY + 28 }, { x: w / 2 - Math.min(w * 0.3, 360) * 0.8, y: floorY + (h - floorY) * 0.6 },
+      { x: w / 2 + Math.min(w * 0.3, 360) * 0.8, y: floorY + (h - floorY) * 0.6 },
+    ].map((cd) => ({ ...cd, ph: rand(0, TAU) }));
+    const puff = sprite(64, [[0, 'rgba(255,255,255,0.55)'], [0.5, 'rgba(255,255,255,0.2)'], [1, 'rgba(255,255,255,0)']]);
+    const steam = Array.from({ length: 22 }, () => newPuff(true));
+    function newPuff(scatter) {
+      const fromBasin = Math.random() < 0.3;
+      const y0 = fromBasin ? by - 40 : rand(floorY + 10, h);
+      return {
+        x: fromBasin ? bx + rand(-30, 30) : rand(0, w), y: scatter ? rand(spring, y0) : y0, y0,
+        vy: rand(8, 16), drift: rand(-6, 6), r: rand(40, 90), grow: rand(6, 14), ph: rand(0, TAU),
+      };
+    }
+    const dust = motes(40, { x: 0, y: spring, w, h: floorY - spring });
+    const ripples = [];
+    let nextRipple = 0;
+
+    return {
+      draw(c, t, dt) {
+        c.drawImage(room, 0, 0, w, h);
+        // shafts of daylight, slowly breathing
+        c.globalCompositeOperation = 'lighter';
+        for (const s of shafts) {
+          const a = 0.06 + 0.03 * Math.sin(t * 0.25 + s.ph);
+          const g = c.createLinearGradient(s.x, s.y, s.x + shaftLen * 0.35, s.y + shaftLen);
+          g.addColorStop(0, `rgba(255,240,205,${a})`);
+          g.addColorStop(1, 'rgba(255,240,205,0)');
+          c.fillStyle = g;
+          c.beginPath();
+          c.moveTo(s.x - 8, s.y);
+          c.lineTo(s.x + 8, s.y);
+          c.lineTo(s.x + shaftLen * 0.35 + 60, s.y + shaftLen);
+          c.lineTo(s.x + shaftLen * 0.35 - 40, s.y + shaftLen);
+          c.closePath();
+          c.fill();
+        }
+        c.globalCompositeOperation = 'source-over';
+        drawMotes(c, dust, { x: 0, y: spring, w, h: floorY - spring }, t, dt, '#fff4dc', 0.35);
+        // water falling from the tap into the basin, with rings on the surface
+        c.strokeStyle = 'rgba(210,240,245,0.8)';
+        c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(bx + 9, tapY + 9);
+        for (let k = 1; k <= 8; k++) {
+          const f = k / 8;
+          c.lineTo(bx + 9 + Math.sin(t * 9 + k) * 0.8, tapY + 9 + (by - 40 - tapY - 9) * f);
+        }
+        c.stroke();
+        nextRipple -= dt;
+        if (nextRipple <= 0) { ripples.push({ age: 0 }); nextRipple = 0.7; }
+        for (let i = ripples.length - 1; i >= 0; i--) {
+          const r = ripples[i];
+          r.age += dt;
+          if (r.age > 2.2) { ripples.splice(i, 1); continue; }
+          c.strokeStyle = `rgba(255,255,255,${0.5 * (1 - r.age / 2.2)})`;
+          c.lineWidth = 1.2;
+          c.beginPath();
+          c.ellipse(bx + 9, by - 39, 4 + r.age * 17, 1 + r.age * 2.6, 0, 0, TAU);
+          c.stroke();
+        }
+        // candles
+        for (const cd of candles) {
+          const fl = 0.85 + 0.15 * Math.sin(t * 7 + cd.ph) * Math.sin(t * 3.1 + cd.ph * 2);
+          c.globalCompositeOperation = 'lighter';
+          glow(c, cd.x, cd.y - 22, 46 * fl, 'rgba(255,170,80,A)', 0.4);
+          c.globalCompositeOperation = 'source-over';
+          c.fillStyle = '#f7efe0';
+          c.fillRect(cd.x - 7, cd.y - 18, 14, 18);
+          c.fillStyle = '#e8dcc6';
+          c.beginPath();
+          c.ellipse(cd.x, cd.y - 18, 7, 2.5, 0, 0, TAU);
+          c.fill();
+          c.fillStyle = '#ffcf6b';
+          c.beginPath();
+          c.ellipse(cd.x + Math.sin(t * 5 + cd.ph) * 0.8, cd.y - 25, 2.6, 6 * fl, 0, 0, TAU);
+          c.fill();
+        }
+        // steam rising and fading
+        for (let i = 0; i < steam.length; i++) {
+          const p = steam[i];
+          p.y -= p.vy * dt;
+          p.x += (p.drift + Math.sin(t * 0.4 + p.ph) * 5) * dt;
+          p.r += p.grow * dt;
+          const life = (p.y0 - p.y) / (p.y0 - spring);
+          if (life >= 1) { steam[i] = newPuff(false); continue; }
+          c.globalAlpha = Math.sin(Math.min(1, Math.max(0, life)) * Math.PI) * 0.32;
+          c.drawImage(puff, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+        }
+        c.globalAlpha = 1;
+      },
+    };
+  };
 })();

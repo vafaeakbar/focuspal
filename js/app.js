@@ -430,6 +430,7 @@
     $('#phaseAlertPrimary').dataset.start = waiting ? '1' : '';
     $('#phaseAlertSecondary').hidden = !waiting;
     $('#phaseAlertSecondary').textContent = isBreak ? 'Later' : 'Not yet';
+    $('#phaseAlertBreathe').hidden = !isBreak;
     $('#phaseAlertNotify').hidden = !('Notification' in window) || settings.notify || Notification.permission === 'denied';
     exitZen();
     box.hidden = false;
@@ -453,6 +454,12 @@
     if (startNow && !timer.running) start();
   });
   $('#phaseAlertSecondary').addEventListener('click', closePhaseAlert);
+  $('#phaseAlertBreathe').addEventListener('click', () => {
+    const startNow = $('#phaseAlertPrimary').dataset.start === '1';
+    closePhaseAlert();
+    if (startNow && !timer.running) start();
+    FP.breathe.open({ minutes: minutesFor(timer.mode) >= 3 ? 3 : 1, autostart: true });
+  });
   $('#phaseAlertNotify').addEventListener('click', async () => {
     let ok = Notification.permission === 'granted';
     if (!ok) { try { ok = (await Notification.requestPermission()) === 'granted'; } catch (e) { ok = false; } }
@@ -474,7 +481,7 @@
   // (focus or break) or sounds playing. If the device sleeps, browsers stop all audio.
   let wakeLock = null;
   const wantWakeLock = () => settings.wakeLock && !document.hidden
-    && (timer.running || (entered && settings.soundOn && audio.active.size > 0));
+    && (timer.running || FP.breathe.inSession || (entered && settings.soundOn && audio.active.size > 0));
   async function requestWakeLock() {
     if (!('wakeLock' in navigator) || wakeLock) return;
     try {
@@ -577,7 +584,8 @@
   }
 
   function applyDuck() {
-    if (FP.map.isOpen && !FP.map.traveling) audio.setDuck(0.3);
+    if (FP.breathe.isOpen) audio.setDuck(0.35);
+    else if (FP.map.isOpen && !FP.map.traveling) audio.setDuck(0.3);
     else audio.setDuck(settings.dimBreaks && timer.mode !== 'focus' ? 0.45 : 1);
   }
 
@@ -753,6 +761,18 @@
     },
   });
   const openMap = () => FP.map.open(settings.env);
+
+  // ---------- Breathe ----------
+  FP.breathe.init();
+  FP.breathe.onChange((what) => {
+    // Beginning a session is a tap, so it's a good moment to wake the audio for the bell.
+    if (what === 'start') unlockAudio();
+    if (what === 'open') exitZen();
+    if (what === 'close') scheduleZen();
+    applyDuck();
+    updateWakeLock();
+  });
+  $('#breatheBtn').addEventListener('click', () => FP.breathe.open());
 
   // ---------- Premium ----------
   FP.premium.init();
@@ -1227,6 +1247,14 @@
       if (key === 'escape') closePhaseAlert();
       return;
     }
+    if (FP.breathe.isOpen) {
+      if (key === 'escape') FP.breathe.close();
+      else if ((key === ' ' || key === 'spacebar') && tag !== 'button') {
+        ev.preventDefault();
+        FP.breathe.inSession ? FP.breathe.togglePause() : FP.breathe.begin();
+      }
+      return;
+    }
     if (FP.avatar.isOpen) {
       if (key === 'escape') FP.avatar.close();
       return;
@@ -1265,6 +1293,7 @@
     else if (key === 't') setMinimized(!settings.timerMin, { focus: false });
     else if (key === 'd') toggleNight();
     else if (key === 'z') enterFocusMode();
+    else if (key === 'b') FP.breathe.open();
     else if (key === 'escape') closePanel();
     else if (/^[0-9]$/.test(key) && placeForKey(key)) {
       const id = placeForKey(key).id;

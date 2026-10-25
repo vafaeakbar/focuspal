@@ -535,6 +535,26 @@
         });
       });
     }
+
+    // Soft bowl-like cue for the breathing guide: higher to breathe in, lower to breathe out.
+    bell(kind = 'in') {
+      if (!this.ctx) return;
+      const ctx = this.ctx;
+      const t = ctx.currentTime + 0.02;
+      const f = { in: 392, hold: 329.63, out: 293.66, done: 261.63 }[kind] || 329.63;
+      const level = kind === 'hold' ? 0.5 : 1;
+      [[1, 0.12, 3.2], [2.76, 0.035, 1.8], [5.4, 0.012, 1]].forEach(([m, a, d]) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.frequency.value = f * m;
+        g.gain.setValueAtTime(MIN_GAIN, t);
+        g.gain.exponentialRampToValueAtTime(a * level, t + 0.04);
+        g.gain.exponentialRampToValueAtTime(MIN_GAIN, t + d);
+        o.connect(g).connect(this.sfx);
+        o.start(t);
+        o.stop(t + d + 0.05);
+      });
+    }
   }
 
   FP.audio = new AudioEngine();

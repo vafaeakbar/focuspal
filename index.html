@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Noto+Kufi+Arabic:wght@400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cairo:wght@600&family=Pacifico&display=swap" rel="stylesheet">
   <!-- Bump ?v= on every release so browsers fetch the new files. -->
-  <link rel="stylesheet" href="css/styles.css?v=20261022d">
+  <link rel="stylesheet" href="css/styles.css?v=20261025a">
 </head>
 <body data-mode="focus">
   <canvas id="scene" aria-hidden="true"></canvas>
@@ -42,6 +42,9 @@
       </button>
       <button class="icon-btn" data-open="sounds" title="Sound mixer" aria-label="Sound mixer">
         <svg viewBox="0 0 24 24"><path d="M6 4v16M12 4v16M18 4v16"/><rect x="4" y="13" width="4" height="3" rx="1"/><rect x="10" y="7" width="4" height="3" rx="1"/><rect x="16" y="11" width="4" height="3" rx="1"/></svg>
+      </button>
+      <button class="icon-btn" id="breatheBtn" title="Breathe: a guided breathing break (B)" aria-label="Breathe: open the guided breathing mode">
+        <svg viewBox="0 0 24 24"><path d="M3 9h10a3 3 0 1 0-3-3M3 15h14a3 3 0 1 1-3 3M3 12h7"/></svg>
       </button>
       <button class="icon-btn" id="focusModeBtn" title="Focus mode: full screen, no buttons (Z)" aria-label="Enter focus mode">
         <svg viewBox="0 0 24 24"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><circle cx="12" cy="12" r="3"/></svg>
@@ -112,7 +115,44 @@
         <button class="btn" id="phaseAlertPrimary">Got it</button>
         <button class="btn ghost" id="phaseAlertSecondary" hidden>Not yet</button>
       </div>
+      <button class="phase-alert-breathe" id="phaseAlertBreathe" hidden><span aria-hidden="true">🫁</span> Breathe for 3 minutes</button>
       <button class="phase-alert-notify" id="phaseAlertNotify" hidden>🔔 Also notify me when FocusPal is in the background</button>
+    </div>
+  </div>
+
+  <div class="breathe" id="breathe" role="dialog" aria-modal="true" aria-labelledby="breatheTitle" hidden>
+    <button class="breathe-close" id="breatheClose" aria-label="Close breathing">✕</button>
+    <div class="breathe-setup" id="breatheSetup">
+      <h2 id="breatheTitle">Breathe</h2>
+      <p class="breathe-sub">A few minutes of slow breathing. Follow the circle: it grows as you breathe in and shrinks as you breathe out.</p>
+      <div class="breathe-patterns" id="breathePatterns" aria-label="Breathing pattern"></div>
+      <div class="breathe-lengths" id="breatheLengths" aria-label="How long"></div>
+      <label class="toggle breathe-bell"><input type="checkbox" id="breatheBell"><span></span>Soft bell when the breath changes</label>
+      <button class="btn" id="breatheStart">Begin</button>
+    </div>
+    <div class="breathe-session" id="breatheSession" hidden>
+      <div class="breathe-orb" id="breatheOrb">
+        <div class="breathe-ring" aria-hidden="true"></div>
+        <div class="breathe-circle" id="breatheCircle" aria-hidden="true"></div>
+        <div class="breathe-label">
+          <div class="breathe-cue" id="breatheCue" aria-live="polite">Breathe in</div>
+          <div class="breathe-count" id="breatheCount" aria-hidden="true"></div>
+        </div>
+      </div>
+      <p class="breathe-left" id="breatheLeft"></p>
+      <div class="breathe-actions">
+        <button class="btn ghost" id="breathePause">Pause</button>
+        <button class="btn ghost" id="breatheEnd">End</button>
+      </div>
+    </div>
+    <div class="breathe-done" id="breatheDone" hidden>
+      <div class="breathe-done-icon" aria-hidden="true">🌿</div>
+      <h2>Well done</h2>
+      <p id="breatheDoneText"></p>
+      <div class="breathe-actions">
+        <button class="btn" id="breatheDoneBtn">Back to FocusPal</button>
+        <button class="btn ghost" id="breatheAgain">Breathe again</button>
+      </div>
     </div>
   </div>
 
@@ -255,6 +295,7 @@
         <span><kbd>T</kbd> minimize timer</span>
         <span><kbd>D</kbd> night lighting</span>
         <span><kbd>Z</kbd> focus mode</span>
+        <span><kbd>B</kbd> breathe</span>
         <span><kbd>F</kbd> full screen</span>
         <span><kbd>1–9</kbd> <kbd>0</kbd> travel to a place</span>
       </div>
@@ -342,14 +383,15 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20261022d"></script>
-  <script src="js/audio.js?v=20261022d"></script>
-  <script src="js/sounds.js?v=20261022d"></script>
-  <script src="js/scenes.js?v=20261022d"></script>
-  <script src="js/environments.js?v=20261022d"></script>
-  <script src="js/avatar.js?v=20261022d"></script>
-  <script src="js/premium.js?v=20261022d"></script>
-  <script src="js/map.js?v=20261022d"></script>
-  <script src="js/app.js?v=20261022d"></script>
+  <script src="js/config.js?v=20261025a"></script>
+  <script src="js/audio.js?v=20261025a"></script>
+  <script src="js/sounds.js?v=20261025a"></script>
+  <script src="js/scenes.js?v=20261025a"></script>
+  <script src="js/environments.js?v=20261025a"></script>
+  <script src="js/avatar.js?v=20261025a"></script>
+  <script src="js/premium.js?v=20261025a"></script>
+  <script src="js/map.js?v=20261025a"></script>
+  <script src="js/breathe.js?v=20261025a"></script>
+  <script src="js/app.js?v=20261025a"></script>
 </body>
 </html>
