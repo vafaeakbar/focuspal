@@ -578,33 +578,60 @@
     });
   };
 
-  // The cabin PA: a two-tone chime, then the captain speaking. The words come from the
-  // browser's own text-to-speech voice, so they can't run through the Web Audio graph;
-  // the voice's volume follows the layer, the master volume and any ducking instead.
+  // The cabin PA: a two-tone chime, then the captain speaking in Arabic and then English,
+  // as on Gulf Air. The words come from the browser's own text-to-speech voices, so they
+  // can't run through the Web Audio graph; their volume follows the layer, the master
+  // volume and any ducking instead. Without an Arabic voice, only the English is spoken.
   const CAPTAIN = [
-    'Good afternoon, ladies and gentlemen, this is your captain speaking. We are cruising at thirty-seven thousand feet, and the skies ahead look smooth. Sit back and enjoy the rest of the flight.',
-    'Hello again from the flight deck. We are about halfway to Bahrain and right on schedule. The weather on arrival is clear, with a gentle breeze.',
-    'Ladies and gentlemen, if you look out of the windows on the right, you can see a beautiful sea of clouds below us. It should stay this calm for a while.',
-    'This is your captain. We have picked up a nice tailwind, so we expect to arrive a few minutes early. Thank you for flying with us today.',
-    'Ladies and gentlemen, the cabin crew will be coming through shortly with hot drinks and water. Please let them know if there is anything you need.',
-    'Good afternoon from the flight deck. Everything is running smoothly up here. Take this quiet time to rest, read or get some work done.',
+    {
+      ar: 'سيداتي سادتي، معكم قائد الطائرة. نحلّق الآن على ارتفاع سبعة وثلاثين ألف قدم، والأجواء أمامنا هادئة. استرخوا واستمتعوا ببقية الرحلة.',
+      en: 'Good afternoon, ladies and gentlemen, this is your captain speaking. We are cruising at thirty-seven thousand feet, and the skies ahead look smooth. Sit back and enjoy the rest of the flight.',
+    },
+    {
+      ar: 'مرحبًا مجددًا من قمرة القيادة. قطعنا نصف المسافة إلى البحرين، ونسير في موعدنا تمامًا. الطقس عند الوصول صافٍ مع نسيمٍ لطيف.',
+      en: 'Hello again from the flight deck. We are about halfway to Bahrain and right on schedule. The weather on arrival is clear, with a gentle breeze.',
+    },
+    {
+      ar: 'سيداتي سادتي، يمكنكم أن تروا من النوافذ على الجهة اليمنى بحرًا جميلًا من الغيوم تحتنا، ومن المتوقع أن تبقى الأجواء هادئة لبعض الوقت.',
+      en: 'Ladies and gentlemen, if you look out of the windows on the right, you can see a beautiful sea of clouds below us. It should stay this calm for a while.',
+    },
+    {
+      ar: 'معكم قائد الطائرة. ساعدتنا الرياح الخلفية، لذا نتوقع الوصول قبل موعدنا ببضع دقائق. شكرًا لسفركم معنا اليوم.',
+      en: 'This is your captain. We have picked up a nice tailwind, so we expect to arrive a few minutes early. Thank you for flying with us today.',
+    },
+    {
+      ar: 'سيداتي سادتي، سيمرّ طاقم الضيافة بعد قليل لتقديم المشروبات الساخنة والماء. لا تترددوا في طلب ما تحتاجونه.',
+      en: 'Ladies and gentlemen, the cabin crew will be coming through shortly with hot drinks and water. Please let them know if there is anything you need.',
+    },
+    {
+      ar: 'تحية من قمرة القيادة. كل شيء يسير بسلاسة هنا. استفيدوا من هذا الوقت الهادئ للراحة أو القراءة أو إنجاز أعمالكم.',
+      en: 'Good afternoon from the flight deck. Everything is running smoothly up here. Take this quiet time to rest, read or get some work done.',
+    },
   ];
-  const BELT_ON = 'Ladies and gentlemen, the captain has turned on the fasten seatbelt sign. We are passing through some light turbulence. Please return to your seats and keep your seatbelts fastened.';
-  const BELT_OFF = 'The captain has turned off the fasten seatbelt sign. You are free to move about the cabin, but please keep your seatbelt fastened while you are seated.';
-  let voice = null;
-  const pickVoice = () => {
+  const BELT_ON = {
+    ar: 'سيداتي سادتي، أضاء قائد الطائرة إشارة ربط أحزمة المقاعد، إذ نمرّ ببعض المطبات الهوائية الخفيفة. يُرجى العودة إلى مقاعدكم وإبقاء الأحزمة مربوطة.',
+    en: 'Ladies and gentlemen, the captain has turned on the fasten seatbelt sign. We are passing through some light turbulence. Please return to your seats and keep your seatbelts fastened.',
+  };
+  const BELT_OFF = {
+    ar: 'أطفأ قائد الطائرة إشارة ربط أحزمة المقاعد. يمكنكم الآن التنقّل في المقصورة، مع إبقاء الحزام مربوطًا أثناء الجلوس.',
+    en: 'The captain has turned off the fasten seatbelt sign. You are free to move about the cabin, but please keep your seatbelt fastened while you are seated.',
+  };
+  const voices = {};
+  const pickVoice = (lang) => {
     const synth = window.speechSynthesis;
     if (!synth) return null;
-    if (voice) return voice;
-    const list = synth.getVoices().filter((v) => /^en[-_]/i.test(v.lang));
-    voice = list.find((v) => /en[-_]GB/i.test(v.lang) && v.localService) || list.find((v) => v.localService) || list[0] || null;
-    return voice;
+    if (voices[lang]) return voices[lang];
+    const list = synth.getVoices().filter((v) => v.lang.toLowerCase().startsWith(lang));
+    const local = list.filter((v) => v.localService);
+    const preferred = lang === 'en' ? /en[-_]GB/i : /ar[-_](SA|BH|AE|001)/i;
+    voices[lang] = local.find((v) => preferred.test(v.lang)) || local[0] || list.find((v) => preferred.test(v.lang)) || list[0] || null;
+    return voices[lang];
   };
-  if (window.speechSynthesis) window.speechSynthesis.addEventListener?.('voiceschanged', () => { voice = null; });
+  if (window.speechSynthesis) window.speechSynthesis.addEventListener?.('voiceschanged', () => { delete voices.en; delete voices.ar; });
 
   S.announcements = (k, out) => {
     const synth = window.speechSynthesis;
-    const say = (text, delay) => {
+    const say = (lines, delay) => {
       // the PA chime always plays; the words only when the browser can speak and Calm focus isn't muffling voices
       k.tone({ freq: 783.99, when: delay, attack: 0.005, decay: 1.4, gain: 0.05 });
       k.tone({ freq: 523.25, when: delay + 0.55, attack: 0.005, decay: 1.8, gain: 0.05 });
@@ -612,18 +639,25 @@
       k.after((delay + 1.6) * 1000, () => {
         const a = FP.audio;
         if (a.speechMuffled || document.hidden) return;
-        const u = new SpeechSynthesisUtterance(text);
-        const v = pickVoice();
-        if (v) u.voice = v;
-        u.lang = v ? v.lang : 'en-GB';
-        u.rate = 0.93;
-        u.pitch = 0.92;
-        u.volume = Math.max(0, Math.min(1, out.gain.value * a.volume * a.duckLevel * 1.6));
+        const volume = Math.max(0, Math.min(1, out.gain.value * a.volume * a.duckLevel * 1.6));
+        const queue = ['ar', 'en'].map((lang) => {
+          const v = pickVoice(lang);
+          // never let an English voice read the Arabic (or the reverse)
+          if (!v && lang === 'ar') return null;
+          const u = new SpeechSynthesisUtterance(lines[lang]);
+          if (v) u.voice = v;
+          u.lang = v ? v.lang : 'en-GB';
+          u.rate = lang === 'ar' ? 0.9 : 0.93;
+          u.pitch = 0.92;
+          u.volume = volume;
+          return u;
+        }).filter(Boolean);
         synth.cancel();
-        synth.speak(u);
+        queue.forEach((u) => synth.speak(u));
         // stop talking if the layer is switched off or the place changes mid-sentence
         const watch = setInterval(() => { if (!k.alive) synth.cancel(); }, 400);
-        u.onend = u.onerror = () => clearInterval(watch);
+        const lastU = queue[queue.length - 1];
+        lastU.onend = lastU.onerror = () => clearInterval(watch);
       });
     };
     follow(k, () => ride.plane(), (s, p) => {
@@ -633,8 +667,8 @@
     let last = -1;
     k.every(150000, 330000, () => {
       const r = ride.plane();
-      // keep clear of the seatbelt announcements
-      if (r.belt || (r.c > 270 && r.c < 300)) return;
+      // keep clear of the seatbelt announcements (both languages take about 25 seconds)
+      if (r.belt || (r.c > 260 && r.c < 300) || (r.c >= 345 && r.c < 375)) return;
       let i = Math.floor(rand(0, CAPTAIN.length));
       if (i === last) i = (i + 1) % CAPTAIN.length;
       last = i;
