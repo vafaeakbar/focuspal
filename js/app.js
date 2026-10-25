@@ -1013,7 +1013,12 @@
   });
 
   // ---------- Panel ----------
-  function openPanel(tab) {
+  // One Settings button opens the panel on whichever tab was used last.
+  let panelTab = ['timer', 'tasks', 'sounds'].includes(store.get('panelTab')) ? store.get('panelTab') : 'timer';
+  function openPanel(tab = panelTab) {
+    panelTab = tab;
+    store.set('panelTab', tab);
+    $('#panelBtn').setAttribute('aria-expanded', 'true');
     $$('.panel-tabs button').forEach((b) => {
       b.classList.toggle('active', b.dataset.tab === tab);
       b.setAttribute('aria-selected', b.dataset.tab === tab);
@@ -1028,14 +1033,11 @@
   function closePanel() {
     el.panel.classList.remove('open');
     el.panel.setAttribute('aria-hidden', 'true');
+    $('#panelBtn').setAttribute('aria-expanded', 'false');
     el.scrim.classList.remove('show');
     scheduleZen();
   }
-  $$('[data-open]').forEach((b) => b.addEventListener('click', () => {
-    const tab = b.dataset.open;
-    if (el.panel.classList.contains('open') && $(`.panel-body[data-tab="${tab}"]`).classList.contains('active')) closePanel();
-    else openPanel(tab);
-  }));
+  $('#panelBtn').addEventListener('click', () => (el.panel.classList.contains('open') ? closePanel() : openPanel()));
   $$('.panel-tabs button').forEach((b) => b.addEventListener('click', () => openPanel(b.dataset.tab)));
   $('#closePanel').addEventListener('click', closePanel);
   el.scrim.addEventListener('click', closePanel);
