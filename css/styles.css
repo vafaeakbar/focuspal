@@ -720,16 +720,6 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .vapor circle:nth-child(2) { animation-delay: -1s; }
 .vapor circle:nth-child(3) { animation-delay: -2s; }
 @keyframes vapor { 50% { transform: scale(1.35); opacity: .45; } }
-.map-jet { animation: takeoff 22s ease-in infinite; pointer-events: none; }
-@keyframes takeoff {
-  0% { transform: translate(700px, 906px) rotate(0deg) scale(.8); opacity: 0; }
-  4% { transform: translate(712px, 906px) rotate(0deg) scale(.8); opacity: 1; }
-  30% { transform: translate(1010px, 906px) rotate(0deg) scale(.85); opacity: 1; }
-  40% { transform: translate(1170px, 862px) rotate(-16deg) scale(1.05); opacity: 1; }
-  52% { transform: translate(1420px, 720px) rotate(-22deg) scale(1.4); opacity: 0; }
-  100% { transform: translate(1420px, 720px) rotate(-22deg) scale(1.4); opacity: 0; }
-}
-
 /* On phones the card becomes a bottom sheet that appears after tapping a place. */
 @media (max-width: 699px) {
   .map-card { left: 12px; right: 12px; top: auto; bottom: max(12px, env(safe-area-inset-bottom)); width: auto; }

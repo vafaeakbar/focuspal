@@ -386,6 +386,200 @@
     });
   };
 
+  // ---------- Vehicles ----------
+  // The scene and the sound read the same clock, so a bus pulls into its stop
+  // (or a train enters a tunnel) in both at once, even with the sound off.
+  const ride = (FP.ride = {});
+  const smoothstep = (x) => x * x * (3 - 2 * x);
+  const cruise = (c) => 0.86 + 0.14 * Math.sin(c * 0.21);
+
+  // City bus, an 80-second loop: cruise, brake into a stop, doors open and close, pull away.
+  // Turn signals: [start, end, side]. The indicator clicks every 0.38 s.
+  const SIGNALS = [[18, 24, 'left'], [38, 43.5, 'right'], [53, 57, 'right'], [70.5, 75, 'left']];
+  const TICK = 0.38;
+  ride.bus = (now = Date.now() / 1000) => {
+    const c = now % 80;
+    const sig = SIGNALS.find(([a, b]) => c >= a && c < b);
+    const signal = sig ? sig[2] : null;
+    const blink = sig ? Math.floor((c - sig[0]) / TICK) % 2 === 0 : false;
+    const base = { signal, blink, c };
+    if (c < 56) return { ...base, phase: 'cruise', speed: cruise(c), doors: 0 };
+    if (c < 62) return { ...base, phase: 'brake', speed: cruise(56) * (1 - smoothstep((c - 56) / 6)), doors: 0 };
+    if (c < 71) return { ...base, phase: 'stop', speed: 0, doors: c >= 63 && c < 69 ? Math.min(1, (c - 63) / 0.8, (69 - c) / 0.8) : 0 };
+    return { ...base, phase: 'go', speed: cruise(0) * smoothstep((c - 71) / 9), doors: 0 };
+  };
+  // Express train, a 4-minute loop with one tunnel.
+  ride.train = (now = Date.now() / 1000) => {
+    const c = now % 240;
+    const tunnel = c >= 150 && c < 164 ? Math.min(1, (c - 150) / 0.6, (164 - c) / 0.6) : 0;
+    return { speed: 1, tunnel, c };
+  };
+  // Airliner at cruise, a 7-minute loop with a short patch of light turbulence.
+  ride.plane = (now = Date.now() / 1000) => {
+    const c = now % 420;
+    const belt = c >= 300 && c < 345;
+    const bump = c >= 304 && c < 340 ? Math.min(1, (c - 304) / 3, (340 - c) / 3) : 0;
+    return { belt, bump, c };
+  };
+
+  // Watch a ride's clock and call `onChange(state, previous)` a few times a second.
+  function follow(k, read, onChange) {
+    let prev = read();
+    onChange(prev, null);
+    k.every(200, 200, () => {
+      const s = read();
+      onChange(s, prev);
+      prev = s;
+    }, 200);
+  }
+
+  S.bus = (k, out) => {
+    const ctx = out.context;
+    const set = (param, v, tc = 0.35) => param.setTargetAtTime(v, ctx.currentTime, tc);
+    // diesel engine: a buzzy fundamental that rises with speed, under a road rumble
+    const engLp = k.filter('lowpass', 260, 1.2);
+    const engGain = k.gain(0.1);
+    engLp.connect(engGain).connect(out);
+    const eng = k.osc('sawtooth', 34);
+    const eng2 = k.osc('square', 68, 6);
+    eng.connect(engLp);
+    eng2.connect(k.gain(0.3)).connect(engLp);
+    const rumble = k.gain(0.3);
+    k.chain(k.noise('brown'), k.filter('lowpass', 170, 0.8), rumble, out);
+    const road = k.gain(0.05);
+    k.chain(k.noise('pink'), k.filter('bandpass', 650, 0.6), road, out);
+    follow(k, () => ride.bus(), (s, p) => {
+      set(eng.frequency, 30 + 26 * s.speed);
+      set(eng2.frequency, 60 + 52 * s.speed);
+      set(engLp.frequency, 200 + 260 * s.speed);
+      set(engGain.gain, 0.07 + 0.06 * s.speed);
+      set(rumble.gain, 0.12 + 0.28 * s.speed);
+      set(road.gain, 0.015 + 0.06 * s.speed);
+      if (!p) return;
+      if (p.phase === 'cruise' && s.phase === 'brake') {
+        k.burst({ type: 'pink', attack: 0.6, hold: 2.5, decay: 1.5, gain: 0.012, filter: 'bandpass', freq: 2400, Q: 6, to: 1900 });
+      }
+      if (p.phase === 'brake' && s.phase === 'stop') {
+        k.burst({ type: 'white', attack: 0.01, decay: 0.9, gain: 0.05, filter: 'highpass', freq: 2500, Q: 0.5 });
+      }
+      // doors: a hiss, then a soft two-note chime as they open
+      if (p.doors === 0 && s.doors > 0) {
+        k.burst({ type: 'white', attack: 0.02, hold: 0.3, decay: 0.6, gain: 0.04, filter: 'bandpass', freq: 3200, Q: 0.7, pan: 0.5 });
+        k.tone({ freq: 659.25, when: 0.5, attack: 0.01, decay: 1.2, gain: 0.03 });
+        k.tone({ freq: 523.25, when: 0.9, attack: 0.01, decay: 1.5, gain: 0.03 });
+      }
+      if (p.doors >= 1 && s.doors < 1) {
+        k.burst({ type: 'white', attack: 0.02, hold: 0.2, decay: 0.5, gain: 0.035, filter: 'bandpass', freq: 3000, Q: 0.7, pan: 0.5 });
+      }
+    });
+  };
+
+  // Bumps in the road: front wheels, then back wheels, and the panels rattling.
+  S.busBumps = (k, out) => {
+    const hit = (when, g) => {
+      k.tone({ freq: rand(42, 62), when, attack: 0.004, decay: 0.22, gain: 0.16 * g });
+      k.burst({ type: 'pink', when, attack: 0.002, decay: 0.09, gain: 0.03 * g, filter: 'bandpass', freq: 700, Q: 1 });
+      for (let i = 0; i < 5; i++) {
+        k.burst({ type: 'white', when: when + 0.02 + i * rand(0.025, 0.045), attack: 0.001, decay: 0.018, gain: rand(0.006, 0.014) * g, filter: 'bandpass', freq: rand(1500, 3200), Q: 4, pan: rand(-0.6, 0.6) });
+      }
+    };
+    k.every(1500, 5000, () => {
+      const s = ride.bus();
+      if (s.speed < 0.25) return;
+      const g = s.speed * rand(0.6, 1.1);
+      hit(0, g);
+      // the back axle meets the same bump a moment later
+      hit(0.32 / s.speed, g * 0.8);
+    });
+  };
+
+  // The turn signal relay: tick when the lamp lights, tock when it goes out.
+  S.busSignal = (k, out) => {
+    follow(k, () => ride.bus(), (s, p) => {
+      if (!s.signal || (p && p.signal === s.signal)) return;
+      // a signal just started: click through to its end, in time with the lamp
+      const [start, end] = SIGNALS.find(([a, b]) => s.c >= a && s.c < b);
+      const pan = s.signal === 'left' ? -0.35 : 0.35;
+      const first = Math.ceil((s.c - start) / TICK);
+      for (let i = first; start + i * TICK < end; i++) {
+        const when = start + i * TICK - s.c;
+        const on = i % 2 === 0;
+        k.burst({ type: 'white', when, attack: 0.001, decay: 0.012, gain: on ? 0.05 : 0.035, filter: 'bandpass', freq: on ? 2600 : 1900, Q: 2.5, pan });
+        k.tone({ freq: on ? 1250 : 950, when, attack: 0.001, decay: 0.025, gain: on ? 0.02 : 0.014, pan });
+      }
+    });
+  };
+
+  S.train = (k, out) => {
+    const ctx = out.context;
+    const set = (param, v, tc = 0.3) => param.setTargetAtTime(v, ctx.currentTime, tc);
+    const rumbleLp = k.filter('lowpass', 190, 0.7);
+    const rumble = k.gain(0.32);
+    k.chain(k.noise('brown'), rumbleLp, rumble, out);
+    const hiss = k.gain(0.035);
+    k.chain(k.noise('pink'), k.filter('bandpass', 950, 0.7), hiss, out);
+    const hum = k.gain(0.025);
+    k.osc('sine', 100).connect(hum).connect(out);
+    follow(k, () => ride.train(), (s) => {
+      set(rumble.gain, 0.32 + 0.45 * s.tunnel);
+      set(rumbleLp.frequency, 190 + 260 * s.tunnel);
+      set(hiss.gain, 0.035 + 0.05 * s.tunnel);
+    });
+    // a distant horn now and then
+    k.every(90000, 200000, () => {
+      [[311.13, 0], [369.99, 0]].forEach(([f]) => k.tone({ type: 'sawtooth', freq: f, attack: 0.15, hold: 1.1, decay: 0.8, gain: 0.006, filter: { type: 'lowpass', freq: 900 } }));
+    });
+  };
+
+  // The track: clickety-clack as each bogie's two axles cross a rail joint, the
+  // odd clatter over points, and a faint wheel squeal on a curve.
+  S.trainTracks = (k, out) => {
+    const clack = (when, g, pan) => {
+      k.burst({ type: 'white', when, attack: 0.001, decay: 0.035, gain: 0.06 * g, filter: 'bandpass', freq: rand(2300, 2900), Q: 3, pan });
+      k.burst({ type: 'pink', when, attack: 0.001, decay: 0.07, gain: 0.05 * g, filter: 'bandpass', freq: 850, Q: 1.2, pan });
+      k.tone({ freq: rand(65, 80), when, attack: 0.002, decay: 0.1, gain: 0.08 * g });
+    };
+    k.every(2150, 2250, () => {
+      const g = 1 + ride.train().tunnel * 0.5;
+      // this car's rear bogie, then the next car's front bogie
+      [[0, 1], [0.13, 0.85], [0.62, 0.9], [0.75, 0.75]].forEach(([w, a]) => clack(w, g * a * rand(0.9, 1.1), rand(-0.2, 0.2)));
+    }, 300);
+    k.every(40000, 90000, () => {
+      let w = 0;
+      for (let i = 0; i < 7; i++) {
+        clack(w, rand(0.5, 0.9), rand(-0.4, 0.4));
+        w += rand(0.09, 0.22);
+      }
+    });
+    k.every(60000, 140000, () => {
+      const f = rand(3200, 4200);
+      k.tone({ freq: f, to: f * rand(1.03, 1.08), glide: 3, attack: 0.8, hold: 1.2, decay: 1.5, gain: 0.004, pan: rand(-0.5, 0.5) });
+    });
+  };
+
+  S.cabin = (k, out) => {
+    // the classic airliner roar: lots of low, smooth noise
+    k.chain(k.noise('pink'), k.filter('lowpass', 520, 0.5), k.gain(0.42), out);
+    k.chain(k.noise('brown'), k.filter('lowpass', 140, 0.7), k.gain(0.35), out);
+    const tone = k.gain(0.012);
+    tone.connect(out);
+    k.osc('sine', 98).connect(tone);
+    k.osc('sine', 147.3).connect(k.gain(0.5)).connect(tone);
+    k.lfo(tone.gain, 0.07, 0.004);
+    // seatbelt sign chime when it switches on and off, and soft thumps in turbulence
+    follow(k, () => ride.plane(), (s, p) => {
+      if (p && s.belt !== p.belt) k.tone({ freq: 1046.5, attack: 0.005, decay: 1.6, gain: 0.03 });
+    });
+    k.every(500, 1600, () => {
+      const b = ride.plane().bump;
+      if (b > 0) k.tone({ freq: rand(40, 60), attack: 0.02, decay: 0.3, gain: 0.08 * b });
+    });
+  };
+
+  S.airVent = (k, out) => {
+    k.chain(k.noise('white'), k.filter('highpass', 3500, 0.5), k.filter('lowpass', 9000, 0.5), k.gain(0.02), out);
+  };
+
   // ---------- Space ----------
 
   S.drone = (k, out, { root = 55 } = {}) => {

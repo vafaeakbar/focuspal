@@ -359,6 +359,10 @@
       b.setAttribute('aria-selected', on);
     });
     const t = tech();
+    // Rhythms without a long break (52/17, 90/20) have one kind of break, so show one tab.
+    const longBreaks = !!t.every || timer.mode === 'long';
+    $('.mode-tabs [data-mode="long"]').hidden = !longBreaks;
+    $('.mode-tabs [data-mode="short"]').textContent = longBreaks ? 'Short break' : 'Break';
     el.techLabel.textContent = `${t.name.replace(/\s+\d.*$/, '')} · ${t.focus} / ${t.short}`;
     const every = t.every;
     el.dots.innerHTML = '';

@@ -25,6 +25,9 @@
     alajeer: { x: 1092, y: 236, h: 196 },
     henson: { x: 236, y: 812, h: 172 },
     spa: { x: 540, y: 850, h: 118 },
+    bus: { x: 402, y: 888, h: 76 },
+    train: { x: 1268, y: 626, h: 86 },
+    plane: { x: 1060, y: 884, h: 96 },
   };
 
   // ---------- geometry helpers ----------
@@ -101,6 +104,7 @@
     [[1060, 352], [1078, 300], [1092, 236]],
     [[430, 662], [340, 740], [236, 812]],
     [[430, 662], [492, 760], [540, 850]],
+    [[340, 740], [380, 816], [402, 888]],
   ];
 
   // ---------- small props ----------
@@ -328,6 +332,39 @@
         <g transform="translate(-50 -30)"><path d="M0 -10 Q-6 -16 0 -22 Q6 -16 0 -10" fill="#9fd3c7"/></g>
         ${palm(84, 2, 0.5)}`;
     },
+    bus: () => `<ellipse cx="0" cy="3" rx="64" ry="10" fill="rgba(0,0,0,.18)"/>
+        <rect x="-62" y="-64" width="3" height="64" fill="#3b4652"/><circle cx="-60.5" cy="-66" r="8" fill="#1f6fb2" stroke="#fff" stroke-width="2"/>
+        <g transform="translate(-44 0)">
+          <rect x="0" y="-52" width="86" height="44" rx="8" fill="#e8574a" stroke="#8f2e25" stroke-width="2.5"/>
+          <rect x="6" y="-46" width="62" height="18" rx="3" fill="#bfe3f2"/>
+          <path d="M26 -46 V-28 M46 -46 V-28" stroke="#e8574a" stroke-width="3"/>
+          <rect x="72" y="-46" width="10" height="30" rx="2" fill="#bfe3f2" stroke="#8f2e25" stroke-width="1.5"/>
+          <rect x="4" y="-22" width="64" height="5" fill="#fff" opacity=".85"/>
+          <rect x="8" y="-58" width="34" height="7" rx="2" fill="#2a2f36"/><rect x="11" y="-56" width="20" height="3" fill="#ffb84d"/>
+          <circle cx="18" cy="-6" r="8" fill="#2a2f36"/><circle cx="18" cy="-6" r="3" fill="#aab2bc"/>
+          <circle cx="66" cy="-6" r="8" fill="#2a2f36"/><circle cx="66" cy="-6" r="3" fill="#aab2bc"/>
+        </g>`,
+    train: () => {
+      let ties = '';
+      for (let x = -96; x <= 96; x += 12) ties += `<rect x="${x}" y="-3" width="5" height="9" fill="#7a5532"/>`;
+      return `<ellipse cx="0" cy="4" rx="104" ry="12" fill="rgba(0,0,0,.16)"/>
+        ${ties}<path d="M-100 -1 H100 M-100 4 H100" stroke="#6b737c" stroke-width="2"/>
+        <path d="M-92 -8 H52 Q86 -8 96 -26 L96 -30 Q80 -50 50 -50 H-92Z" fill="#f4f6f8" stroke="#3b4a5a" stroke-width="2.5"/>
+        <path d="M-92 -18 H74 Q88 -20 94 -26" stroke="#4fb5a5" stroke-width="5" fill="none"/>
+        <path d="M60 -46 Q82 -44 92 -30 L64 -30Z" fill="#2b3a4a"/>
+        <g fill="#9fd0e8">${[-84, -62, -40, -18, 4, 26].map((x) => `<rect x="${x}" y="-44" width="16" height="12" rx="2"/>`).join('')}</g>
+        <path d="M-40 -50 V-58 M-40 -58 L-24 -66 M-40 -58 L-56 -66" stroke="#3b4a5a" stroke-width="2"/>
+        <rect x="-60" y="-14" width="10" height="4" fill="#3b4a5a"/>`;
+    },
+    // The little blue plane loops above the airport; click it to board.
+    plane: () => {
+      const loop = 'M-84 -58 a84 30 0 1 0 168 0 a84 30 0 1 0 -168 0';
+      const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const fly = still ? 'transform="translate(0 -58)"' : '';
+      const motion = still ? '' : `<animateMotion dur="14s" repeatCount="indefinite" rotate="auto" path="${loop}"/>`;
+      return `<path d="${loop}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>
+        <g ${fly}>${motion}<g transform="scale(1.7)">${topPlane('#3c6fd1')}</g></g>`;
+    },
     space: () => `<ellipse cx="0" cy="2" rx="62" ry="15" fill="#b9c0c7" stroke="#8a939c" stroke-width="3"/>
         <ellipse cx="0" cy="-1" rx="34" ry="7" fill="#9aa3ab"/>
         <g stroke="#d0543c" stroke-width="3" fill="none"><path d="M-56 0 V-132 M-40 0 V-132 M-56 -132 H-40"/><path d="M-56 -10 L-40 -30 L-56 -50 L-40 -70 L-56 -90 L-40 -110 L-56 -130"/><path d="M-40 -96 H-16"/></g>
@@ -444,7 +481,6 @@
       </g>`);
     });
 
-    out.push(`<g class="map-jet">${topPlane('#3c6fd1')}</g>`);
 
     // clouds drifting over everything
     const clouds = [[140, 90, 1.1], [420, 70, 0.8], [760, 120, 1.3], [300, 40, 0.9], [560, 150, 1]];

@@ -161,6 +161,36 @@
         { id: 'warmth', name: 'Warm hum', vol: 0.25, gain: 0.16, reverb: 0.4, create: (k, o) => S.drone(k, o, { root: 65.41 }) },
       ],
     },
+    {
+      id: 'bus', name: 'City Bus', emoji: '🚌', accent: '#e8574a', scene: 'bus', unlock: 0,
+      tagline: 'A window seat on a city bus: streets, palms and towers rolling past, and a gentle stop now and then.',
+      layers: [
+        { id: 'ride', name: 'Engine & road', vol: 0.5, gain: 1, create: (k, o) => S.bus(k, o) },
+        { id: 'bumps', name: 'Road bumps', vol: 0.4, gain: 1.3, create: (k, o) => S.busBumps(k, o) },
+        { id: 'signal', name: 'Turn signal', vol: 0.35, gain: 5, create: (k, o) => S.busSignal(k, o) },
+        { speech: true, id: 'riders', name: 'Other passengers', vol: 0.25, gain: 0.4, reverb: 0.2, create: (k, o) => S.crowd(k, o, { sample: 'cafe-crowd', lp: 1100, hp: 150 }) },
+        { id: 'ac', name: 'Air conditioning', vol: 0.3, gain: 0.65, create: (k, o) => S.hvac(k, o) },
+      ],
+    },
+    {
+      id: 'train', name: 'Express Train', emoji: '🚆', accent: '#4fb5a5', scene: 'train', unlock: 0,
+      tagline: 'A table seat on an express train: fields and hills sliding by, the rhythm of the rails and a cup of coffee.',
+      layers: [
+        { id: 'tracks', name: 'Train tracks', vol: 0.5, gain: 2, create: (k, o) => S.trainTracks(k, o) },
+        { id: 'rails', name: 'Carriage rumble', vol: 0.45, gain: 1, create: (k, o) => S.train(k, o) },
+        { speech: true, id: 'carriage', name: 'Quiet carriage', vol: 0.2, gain: 0.35, reverb: 0.2, create: (k, o) => S.crowd(k, o, { sample: 'cafe-crowd', lp: 900, hp: 150 }) },
+        { id: 'pages', name: 'Turning pages', vol: 0.3, gain: 4.7, reverb: 0.1, create: (k, o) => S.pages(k, o) },
+      ],
+    },
+    {
+      id: 'plane', name: 'Airplane Cabin', emoji: '✈️', accent: '#6fa8dc', scene: 'plane', unlock: 0,
+      tagline: 'A window seat above the clouds: the steady hush of the engines, the wing in the sun, nowhere to be until you land.',
+      layers: [
+        { id: 'cabin', name: 'Cabin hum', vol: 0.55, gain: 1, create: (k, o) => S.cabin(k, o) },
+        { id: 'vent', name: 'Air vent', vol: 0.25, gain: 7, create: (k, o) => S.airVent(k, o) },
+        { speech: true, id: 'passengers', name: 'Other passengers', vol: 0.15, gain: 0.3, reverb: 0.1, create: (k, o) => S.crowd(k, o, { sample: 'cafe-crowd', lp: 700, hp: 150 }) },
+      ],
+    },
   ];
 
   FP.envById = (id) => FP.environments.find((e) => e.id === id) || FP.environments[1];

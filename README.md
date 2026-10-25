@@ -9,16 +9,18 @@ A focus timer with immersive environments. Pick a place on the island map, choos
 - **Free & Premium:** currently switched off (`lockPlaces: false` in `js/config.js`), so every place is open. When switched on: Busy Café, Old Library, Rainy Dorm, Courtyard Library and Alajeer HQ are open from the start; the rest unlock as you complete focus sessions (2, 4, 7, 10, 12, 15, 20 and 25). Premium unlocks every place immediately. Prices and checkout links live in `js/config.js`; until a checkout link is set, the upgrade button shows “Coming soon”. When running locally, the upgrade dialog has a developer switch to test Premium.
 - **Your animal (optional):** pick a study buddy (cat, dog, fox, panda, owl, rabbit, bear, penguin, koala, lion, falcon or camel), an accessory (glasses, headphones, grad cap) and a background. It rides on the map pin and sits in the top bar.
 - **Island map:** start on an illustrated map, pick a landmark, and your pin travels there before zooming into the scene. Open it again any time with the Map button or `M`.
-- **14 environments:** Deep Space, Busy Café, Old Library, Late-night Diner, Sunny Garden, Rainy Dorm, Calm Office, Ocean Sunset, Fireside Cabin, Airport Café, Grand Hotel Lobby, Courtyard Library (a library in a mosque courtyard), Alajeer HQ and Henson Site Office. Each has an animated scene and a mixable soundscape.
+- **18 environments:** Deep Space, Busy Café, Old Library, Late-night Diner, Sunny Garden, Rainy Dorm, Calm Office, Ocean Sunset, Fireside Cabin, Airport Café, Grand Hotel Lobby, Courtyard Library (a library in a mosque courtyard), Alajeer HQ, Henson Site Office, Hammam Spa, City Bus, Express Train and Airplane Cabin. Each has an animated scene and a mixable soundscape.
+- **Moving vehicles:** the bus, train and plane run on a shared clock, so picture and sound match: the bus brakes into a stop (brakes, doors, someone boarding), blinks its turn signal in time with the click and rattles over bumps; the train clacks over rail joints and passes through a tunnel; the plane hits a short patch of turbulence with the seatbelt sign and chime. On the map, the Airplane Cabin is the little blue plane looping above the airport.
+- **Breathe (`B`):** a guided breathing mode separate from the timer. Calm (six breaths a minute), Box or Relax (4-7-8), for 1 to 10 minutes, with a circle that grows and shrinks with the breath and an optional soft bell. The break alert offers "Breathe for 3 minutes".
 - **Audio:** café, diner and office crowds are real public-domain recordings; everything else is synthesized live with the Web Audio API.
 - **Clear break alerts:** when a break starts or ends, an alert stays on screen until you tap it (with a break tip, or "Start focusing"), plus a double chime, a vibration on Android, a 🔔 in the tab title, and an optional system notification.
-- Break suggestions (20-20-20 eye rule, movement, hydration), auto-start, ambience that softens on breaks.
+- Break suggestions (20-20-20 eye rule, movement, hydration), auto-start, ambience that softens on breaks. Rhythms with a long break (Pomodoro, Deep Study, Custom) switch to it automatically after the set number of focus sessions; rhythms without one (52/17, 90/20) show a single Break tab.
 - **Calm focus & immersion levels:** while you focus, the scene slowly dims, softens and slows so nothing pulls your eye; breaks bring it fully back to life. Choose *Calm* (nearly still, and crowd voices are turned down and muffled so words can’t be followed: best for reading and exams), *Balanced* (default) or *Immersive* (full motion) in the Timer panel or press `I`.
 - **Focus mode (`Z`):** full screen with no buttons, just the scene, the time and what you're working on. Esc or double-click (double-tap on phones) to leave.
 - **Night lighting:** a moon button (or `D`) dims every scene with a soft moonlit tint; remembered between visits.
 - **Minimize the timer** to a small pill (time, play/pause, progress) when you want the full scene; your choice is remembered.
 - Task list with 🍅 counts per task, daily stats, “zen mode” that hides everything but the timer while you focus.
-- Keyboard: `Space` start/pause · `R` reset · `S` skip · `M` map · `A` ambience · `I` immersion · `T` minimize timer · `D` night lighting · `Z` focus mode · `F` full screen · `1–9`, `0` travel to a place.
+- Keyboard: `Space` start/pause · `R` reset · `S` skip · `M` map · `A` ambience · `I` immersion · `T` minimize timer · `D` night lighting · `Z` focus mode · `B` breathe · `F` full screen · `1–9`, `0` travel to a place.
 - Settings, tasks and stats are saved in the browser (localStorage).
 
 ## Files
@@ -34,6 +36,7 @@ A focus timer with immersive environments. Pick a place on the island map, choos
 - `audio/*.js`: crowd recordings, embedded as base64 so the site also works when opened straight from disk
 - `js/environments.js`: environment definitions (scene + sound layers + calibrated levels)
 - `js/app.js`: timer, techniques, tasks, mixer, UI
+- `js/breathe.js`: the guided breathing mode
 
 ## Credits
 - “Cafe ambiance” by Marble Toast, [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Cafe_ambiance.ogg), CC0 1.0 (first ~3 minutes, re-encoded to AAC).
