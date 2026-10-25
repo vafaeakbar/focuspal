@@ -396,6 +396,28 @@
 
   // ---------- Notifications ----------
   let toastTimer;
+  // Captions for the captain's announcements, so you can read along (or see one the voice missed).
+  let captionTimer;
+  window.addEventListener('fp:captain', (ev) => {
+    const box = $('#captainCaption');
+    $('#captainAr').textContent = ev.detail.ar;
+    $('#captainEn').textContent = ev.detail.en;
+    box.hidden = false;
+    requestAnimationFrame(() => box.classList.add('show'));
+    clearTimeout(captionTimer);
+    // in case the voice never reports that it finished
+    captionTimer = setTimeout(hideCaption, 40000);
+  });
+  function hideCaption() {
+    const box = $('#captainCaption');
+    box.classList.remove('show');
+    setTimeout(() => { if (!box.classList.contains('show')) box.hidden = true; }, 400);
+  }
+  window.addEventListener('fp:captain-end', () => {
+    clearTimeout(captionTimer);
+    captionTimer = setTimeout(hideCaption, 1500);
+  });
+
   function toast(msg) {
     el.toast.textContent = msg;
     el.toast.classList.add('show');
@@ -825,6 +847,19 @@
       row.className = 'mixer-row';
       const id = `mix-${e.id}-${l.id}`;
       row.innerHTML = `<label class="mix-name" for="${id}">${l.name}${l.speech ? ' <small title="Voices are turned down and muffled during Calm focus so words can’t pull your attention.">· softer in Calm focus</small>' : ''}</label><input type="range" min="0" max="1" step="0.01" id="${id}">`;
+      if (l.action) {
+        const b = document.createElement('button');
+        b.className = 'mix-action';
+        b.textContent = l.action.label;
+        b.addEventListener('click', () => {
+          // speak inside the tap itself, so iPhones allow the voice
+          FP.unlockSpeech();
+          unlockAudio();
+          if (!settings.soundOn) setSoundOn(true);
+          l.action.run();
+        });
+        row.querySelector('.mix-name').appendChild(b);
+      }
       const input = row.querySelector('input');
       input.value = layerVol(e, l);
       setFill(input);
@@ -1208,6 +1243,7 @@
     setMode(b.dataset.mode);
   }));
   el.soundToggle.addEventListener('click', () => setSoundOn(!settings.soundOn || !audio.active.size));
+  $('#miniSound').addEventListener('click', () => setSoundOn(!settings.soundOn || !audio.active.size));
 
   el.masterVol.value = settings.volume;
   el.chimeVol.value = settings.chimeVol;
@@ -1356,7 +1392,7 @@
   // Start the ambience on the first interaction anywhere (browsers require a gesture).
   const firstGesture = (ev) => {
     // The sound button handles its own first click.
-    if (ev.target.closest && ev.target.closest('#soundToggle')) return;
+    if (ev.target.closest && ev.target.closest('#soundToggle, #miniSound')) return;
     window.removeEventListener('pointerdown', firstGesture);
     window.removeEventListener('keydown', firstGesture);
     if (settings.soundOn) unlockAudio();

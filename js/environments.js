@@ -1,7 +1,7 @@
 /*
  * Environments: each pairs an animated scene with a set of mixable sound layers.
  * Layer fields: id, name, vol (default 0..1), gain (level calibration), reverb (send amount), create,
- * speech (intelligible voices: muffled during Calm focus).
+ * speech (intelligible voices: muffled during Calm focus), action ({ label, run }: a button beside the slider).
  * Environment `unlock`: completed focus sessions needed to unlock it for free (Premium unlocks all).
  */
 (function () {
@@ -187,7 +187,7 @@
       tagline: 'A window seat above the clouds: the steady hush of the engines, the wing in the sun, nowhere to be until you land.',
       layers: [
         { id: 'cabin', name: 'Cabin hum & seatbelt sign', vol: 0.55, gain: 1, create: (k, o) => S.cabin(k, o) },
-        { id: 'captain', name: 'Pilot announcements', vol: 0.5, gain: 1, reverb: 0.15, create: (k, o) => S.announcements(k, o) },
+        { id: 'captain', name: 'Pilot announcements', vol: 0.5, gain: 1, reverb: 0.15, action: { label: 'Play one now', run: () => FP.captainNow && FP.captainNow() }, create: (k, o) => S.announcements(k, o) },
         { id: 'vent', name: 'Air vent', vol: 0.25, gain: 7, create: (k, o) => S.airVent(k, o) },
         { speech: true, id: 'passengers', name: 'Other passengers', vol: 0.15, gain: 0.3, reverb: 0.1, create: (k, o) => S.crowd(k, o, { sample: 'cafe-crowd', lp: 700, hp: 150 }) },
       ],

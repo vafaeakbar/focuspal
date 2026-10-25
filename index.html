@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Noto+Kufi+Arabic:wght@400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cairo:wght@600&family=Pacifico&display=swap" rel="stylesheet">
   <!-- Bump ?v= on every release so browsers fetch the new files. -->
-  <link rel="stylesheet" href="css/styles.css?v=20261025g">
+  <link rel="stylesheet" href="css/styles.css?v=20261025h">
 </head>
 <body data-mode="focus">
   <canvas id="scene" aria-hidden="true"></canvas>
@@ -84,6 +84,10 @@
       </div>
 
       <div class="controls">
+        <button class="ctrl sound-toggle" id="soundToggle" title="Sound on/off (A)" aria-label="Turn sound on or off">
+          <svg class="i-on" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+          <svg class="i-off" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+        </button>
         <button class="ctrl" id="resetBtn" title="Reset (R)" aria-label="Reset timer">
           <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>
         </button>
@@ -150,6 +154,12 @@
     </div>
   </div>
 
+  <div class="captain-caption" id="captainCaption" role="status" aria-live="polite" hidden>
+    <div class="captain-tag"><span aria-hidden="true">🎙️</span> Captain speaking</div>
+    <p class="captain-ar" id="captainAr" lang="ar" dir="rtl"></p>
+    <p class="captain-en" id="captainEn"></p>
+  </div>
+
   <button class="sound-paused" id="soundPaused" hidden>🔈 Sound paused · Tap to resume</button>
 
   <div class="focus-hint" id="focusHint" role="status">Press Esc or double-click to leave focus mode</div>
@@ -164,6 +174,10 @@
       <svg class="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>
       <svg class="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
     </button>
+    <button class="mini-btn sound-toggle" id="miniSound" title="Sound on/off (A)" aria-label="Turn sound on or off">
+      <svg class="i-on" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+      <svg class="i-off" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+    </button>
     <button class="mini-btn" id="miniOpen" title="Show the full timer (T)" aria-label="Show the full timer">
       <svg viewBox="0 0 24 24"><path d="M4 10V4h6M20 14v6h-6M4 4l7 7M20 20l-7-7"/></svg>
     </button>
@@ -171,10 +185,6 @@
   </div>
 
   <footer class="envbar">
-    <button class="sound-toggle icon-btn" id="soundToggle" title="Ambience on/off (A)" aria-label="Toggle ambience">
-      <svg class="i-on" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
-      <svg class="i-off" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
-    </button>
     <button class="map-btn" id="mapBtn" title="Open the map (M)">
       <svg viewBox="0 0 24 24"><path d="M9 4.5L3.5 6.5v13L9 17.5l6 2 5.5-2v-13L15 6.5z"/><path d="M9 4.5v13M15 6.5v13"/></svg>
       <span class="map-btn-label">Map</span>
@@ -332,7 +342,7 @@
       <h3 id="mixTitle">Environment</h3>
       <div id="mixer"></div>
       <button class="btn ghost" id="resetMix">Reset this mix</button>
-      <p class="hint small">Every sound here is synthesized live in your browser. Nothing is downloaded or recorded.</p>
+      <p class="hint small">Sounds are made live in your browser, apart from the café and diner crowds (public-domain recordings) and the captain, who uses your device's own voice.</p>
     </div>
   </aside>
 
@@ -377,15 +387,15 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="js/config.js?v=20261025g"></script>
-  <script src="js/audio.js?v=20261025g"></script>
-  <script src="js/sounds.js?v=20261025g"></script>
-  <script src="js/scenes.js?v=20261025g"></script>
-  <script src="js/environments.js?v=20261025g"></script>
-  <script src="js/avatar.js?v=20261025g"></script>
-  <script src="js/premium.js?v=20261025g"></script>
-  <script src="js/map.js?v=20261025g"></script>
-  <script src="js/breathe.js?v=20261025g"></script>
-  <script src="js/app.js?v=20261025g"></script>
+  <script src="js/config.js?v=20261025h"></script>
+  <script src="js/audio.js?v=20261025h"></script>
+  <script src="js/sounds.js?v=20261025h"></script>
+  <script src="js/scenes.js?v=20261025h"></script>
+  <script src="js/environments.js?v=20261025h"></script>
+  <script src="js/avatar.js?v=20261025h"></script>
+  <script src="js/premium.js?v=20261025h"></script>
+  <script src="js/map.js?v=20261025h"></script>
+  <script src="js/breathe.js?v=20261025h"></script>
+  <script src="js/app.js?v=20261025h"></script>
 </body>
 </html>

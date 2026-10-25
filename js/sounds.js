@@ -635,25 +635,32 @@
   // iPhones and iPads only let a page speak after speech was first started from a tap,
   // so speak a silent space on the first tap; announcements can then play on their own.
   const UNLOCK = ['touchend', 'click', 'keydown'];
+  let unlocked = false;
   const unlockSpeech = () => {
     UNLOCK.forEach((e) => window.removeEventListener(e, unlockSpeech, true));
-    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    if (unlocked || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    unlocked = true;
     const u = new SpeechSynthesisUtterance(' ');
     u.volume = 0;
     window.speechSynthesis.speak(u);
   };
   UNLOCK.forEach((e) => window.addEventListener(e, unlockSpeech, true));
+  FP.unlockSpeech = unlockSpeech;
+  // Chrome can drop an utterance that is garbage-collected mid-sentence, so hold on to them.
+  const live = new Set();
 
   S.announcements = (k, out) => {
     const synth = window.speechSynthesis;
     const say = (lines, delay) => {
-      // the PA chime always plays; the words only when the browser can speak and Calm focus isn't muffling voices
+      // the PA chime always plays; the words (and their caption) only when Calm focus isn't muffling voices
       k.tone({ freq: 783.99, when: delay, attack: 0.005, decay: 1.4, gain: 0.05 });
       k.tone({ freq: 523.25, when: delay + 0.55, attack: 0.005, decay: 1.8, gain: 0.05 });
-      if (!synth || !window.SpeechSynthesisUtterance) return;
       k.after((delay + 1.6) * 1000, () => {
         const a = FP.audio;
         if (a.speechMuffled || document.hidden) return;
+        FP.emit('captain', lines);
+        const done = () => FP.emit('captain-end');
+        if (!synth || !window.SpeechSynthesisUtterance) return setTimeout(done, 14000);
         const volume = Math.max(0, Math.min(1, out.gain.value * a.volume * a.duckLevel * 1.6));
         const queue = ['ar', 'en'].map((lang) => {
           const v = pickVoice(lang);
@@ -667,14 +674,33 @@
           u.volume = volume;
           return u;
         }).filter(Boolean);
-        synth.cancel();
-        queue.forEach((u) => synth.speak(u));
+        const lastU = queue[queue.length - 1];
         // stop talking if the layer is switched off or the place changes mid-sentence
         const watch = setInterval(() => { if (!k.alive) synth.cancel(); }, 400);
-        const lastU = queue[queue.length - 1];
-        lastU.onend = lastU.onerror = () => clearInterval(watch);
+        const finish = () => { clearInterval(watch); queue.forEach((u) => live.delete(u)); done(); };
+        lastU.onend = finish;
+        queue.forEach((u) => { live.add(u); u.onerror = finish; });
+        const speak = () => {
+          // a speech queue left paused (e.g. after the tab was in the background) would swallow these
+          synth.resume();
+          queue.forEach((u) => synth.speak(u));
+        };
+        // Chrome sometimes drops an utterance spoken straight after cancel(), so wait a moment
+        if (synth.speaking || synth.pending) {
+          synth.cancel();
+          setTimeout(speak, 120);
+        } else speak();
       });
     };
+    let last = -1;
+    const next = () => {
+      let i = Math.floor(rand(0, CAPTAIN.length));
+      if (i === last) i = (i + 1) % CAPTAIN.length;
+      last = i;
+      return CAPTAIN[i];
+    };
+    // the "Play one now" button in the mixer
+    FP.captainNow = () => { if (k.alive) say(next(), 0); };
     follow(k, () => ride.plane(), (s, p) => {
       if (!p || s.belt === p.belt) return;
       say(s.belt ? BELT_ON : BELT_OFF, 2.2);
@@ -684,15 +710,11 @@
       const r = ride.plane();
       if (!r.belt && !(r.c > 280 && r.c < 300)) say(WELCOME, 0);
     });
-    let last = -1;
     k.every(150000, 330000, () => {
       const r = ride.plane();
       // keep clear of the seatbelt announcements (both languages take about 25 seconds)
       if (r.belt || (r.c > 260 && r.c < 300) || (r.c >= 345 && r.c < 375)) return;
-      let i = Math.floor(rand(0, CAPTAIN.length));
-      if (i === last) i = (i + 1) % CAPTAIN.length;
-      last = i;
-      say(CAPTAIN[i], 0);
+      say(next(), 0);
     });
   };
 
