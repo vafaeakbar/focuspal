@@ -608,6 +608,10 @@
       en: 'Good afternoon from the flight deck. Everything is running smoothly up here. Take this quiet time to rest, read or get some work done.',
     },
   ];
+  const WELCOME = {
+    ar: 'هلا وغلا فيكم على متن رحلتنا للبحرين، معاكم الكابتن. ارتاحوا وركزوا على شغلكم، واحنا بنوصلكم بالسلامة.',
+    en: 'Welcome aboard our flight to Bahrain, this is your captain. Settle in and focus on your work, and we will take care of the rest.',
+  };
   const BELT_ON = {
     ar: 'يا جماعة، الكابتن شغّل إشارة الأحزمة، لأننا داخلين في شوية مطبات خفيفة. لو سمحتوا ارجعوا لمقاعدكم وخلوا الأحزمة مربوطة.',
     en: 'Ladies and gentlemen, the captain has turned on the fasten seatbelt sign. We are passing through some light turbulence. Please return to your seats and keep your seatbelts fastened.',
@@ -628,6 +632,17 @@
     return voices[lang];
   };
   if (window.speechSynthesis) window.speechSynthesis.addEventListener?.('voiceschanged', () => { delete voices.en; delete voices.ar; });
+  // iPhones and iPads only let a page speak after speech was first started from a tap,
+  // so speak a silent space on the first tap; announcements can then play on their own.
+  const UNLOCK = ['touchend', 'click', 'keydown'];
+  const unlockSpeech = () => {
+    UNLOCK.forEach((e) => window.removeEventListener(e, unlockSpeech, true));
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+  };
+  UNLOCK.forEach((e) => window.addEventListener(e, unlockSpeech, true));
 
   S.announcements = (k, out) => {
     const synth = window.speechSynthesis;
@@ -664,6 +679,11 @@
       if (!p || s.belt === p.belt) return;
       say(s.belt ? BELT_ON : BELT_OFF, 2.2);
     });
+    // a welcome from the captain shortly after you board, unless the seatbelt sign is about to speak
+    k.after(rand(12000, 18000), () => {
+      const r = ride.plane();
+      if (!r.belt && !(r.c > 280 && r.c < 300)) say(WELCOME, 0);
+    });
     let last = -1;
     k.every(150000, 330000, () => {
       const r = ride.plane();
@@ -673,7 +693,7 @@
       if (i === last) i = (i + 1) % CAPTAIN.length;
       last = i;
       say(CAPTAIN[i], 0);
-    }, rand(40000, 90000));
+    });
   };
 
   S.airVent = (k, out) => {
