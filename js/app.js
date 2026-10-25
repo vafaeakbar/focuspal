@@ -1347,6 +1347,24 @@
 
   window.addEventListener('beforeunload', () => saveTimer());
 
+  // ---------- Updates ----------
+  // GitHub Pages lets browsers keep the page for up to 10 minutes, so after an update some
+  // visitors still see the old version. Check now and then and offer a one-tap refresh.
+  const myVersion = ((document.querySelector('script[src*="js/app.js"]') || {}).src || '').match(/v=(\w+)/)?.[1];
+  async function checkForUpdate() {
+    if (!myVersion || location.protocol === 'file:') return;
+    try {
+      const res = await fetch(`./?check=${Date.now()}`, { cache: 'no-store' });
+      const live = (await res.text()).match(/js\/app\.js\?v=(\w+)/)?.[1];
+      if (live && live !== myVersion) $('#updateBar').hidden = false;
+    } catch (e) { /* offline: try again later */ }
+  }
+  setTimeout(checkForUpdate, 5000);
+  setInterval(checkForUpdate, 30 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+  // the timer is saved first, so a running session carries on after the refresh
+  $('#updateBtn').addEventListener('click', () => { saveTimer(); location.reload(); });
+
   // ---------- Boot ----------
   function restoreTimer() {
     // Durations may have changed since the timer was saved.
