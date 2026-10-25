@@ -566,9 +566,11 @@
     k.osc('sine', 98).connect(tone);
     k.osc('sine', 147.3).connect(k.gain(0.5)).connect(tone);
     k.lfo(tone.gain, 0.07, 0.004);
-    // seatbelt sign chime when it switches on and off, and soft thumps in turbulence
+    // the seatbelt sign's chime when it switches on and off, and soft thumps in turbulence
     follow(k, () => ride.plane(), (s, p) => {
-      if (p && s.belt !== p.belt) k.tone({ freq: 1046.5, attack: 0.005, decay: 1.6, gain: 0.03 });
+      if (!p || s.belt === p.belt) return;
+      k.tone({ freq: 1046.5, attack: 0.004, decay: 1.8, gain: 0.07 });
+      k.tone({ freq: 2093, attack: 0.004, decay: 0.9, gain: 0.015 });
     });
     k.every(500, 1600, () => {
       const b = ride.plane().bump;
@@ -576,8 +578,121 @@
     });
   };
 
+  // The cabin PA: a two-tone chime, then the captain speaking. The words come from the
+  // browser's own text-to-speech voice, so they can't run through the Web Audio graph;
+  // the voice's volume follows the layer, the master volume and any ducking instead.
+  const CAPTAIN = [
+    'Good afternoon, ladies and gentlemen, this is your captain speaking. We are cruising at thirty-seven thousand feet, and the skies ahead look smooth. Sit back and enjoy the rest of the flight.',
+    'Hello again from the flight deck. We are about halfway to Bahrain and right on schedule. The weather on arrival is clear, with a gentle breeze.',
+    'Ladies and gentlemen, if you look out of the windows on the right, you can see a beautiful sea of clouds below us. It should stay this calm for a while.',
+    'This is your captain. We have picked up a nice tailwind, so we expect to arrive a few minutes early. Thank you for flying with us today.',
+    'Ladies and gentlemen, the cabin crew will be coming through shortly with hot drinks and water. Please let them know if there is anything you need.',
+    'Good afternoon from the flight deck. Everything is running smoothly up here. Take this quiet time to rest, read or get some work done.',
+  ];
+  const BELT_ON = 'Ladies and gentlemen, the captain has turned on the fasten seatbelt sign. We are passing through some light turbulence. Please return to your seats and keep your seatbelts fastened.';
+  const BELT_OFF = 'The captain has turned off the fasten seatbelt sign. You are free to move about the cabin, but please keep your seatbelt fastened while you are seated.';
+  let voice = null;
+  const pickVoice = () => {
+    const synth = window.speechSynthesis;
+    if (!synth) return null;
+    if (voice) return voice;
+    const list = synth.getVoices().filter((v) => /^en[-_]/i.test(v.lang));
+    voice = list.find((v) => /en[-_]GB/i.test(v.lang) && v.localService) || list.find((v) => v.localService) || list[0] || null;
+    return voice;
+  };
+  if (window.speechSynthesis) window.speechSynthesis.addEventListener?.('voiceschanged', () => { voice = null; });
+
+  S.announcements = (k, out) => {
+    const synth = window.speechSynthesis;
+    const say = (text, delay) => {
+      // the PA chime always plays; the words only when the browser can speak and Calm focus isn't muffling voices
+      k.tone({ freq: 783.99, when: delay, attack: 0.005, decay: 1.4, gain: 0.05 });
+      k.tone({ freq: 523.25, when: delay + 0.55, attack: 0.005, decay: 1.8, gain: 0.05 });
+      if (!synth || !window.SpeechSynthesisUtterance) return;
+      k.after((delay + 1.6) * 1000, () => {
+        const a = FP.audio;
+        if (a.speechMuffled || document.hidden) return;
+        const u = new SpeechSynthesisUtterance(text);
+        const v = pickVoice();
+        if (v) u.voice = v;
+        u.lang = v ? v.lang : 'en-GB';
+        u.rate = 0.93;
+        u.pitch = 0.92;
+        u.volume = Math.max(0, Math.min(1, out.gain.value * a.volume * a.duckLevel * 1.6));
+        synth.cancel();
+        synth.speak(u);
+        // stop talking if the layer is switched off or the place changes mid-sentence
+        const watch = setInterval(() => { if (!k.alive) synth.cancel(); }, 400);
+        u.onend = u.onerror = () => clearInterval(watch);
+      });
+    };
+    follow(k, () => ride.plane(), (s, p) => {
+      if (!p || s.belt === p.belt) return;
+      say(s.belt ? BELT_ON : BELT_OFF, 2.2);
+    });
+    let last = -1;
+    k.every(150000, 330000, () => {
+      const r = ride.plane();
+      // keep clear of the seatbelt announcements
+      if (r.belt || (r.c > 270 && r.c < 300)) return;
+      let i = Math.floor(rand(0, CAPTAIN.length));
+      if (i === last) i = (i + 1) % CAPTAIN.length;
+      last = i;
+      say(CAPTAIN[i], 0);
+    }, rand(40000, 90000));
+  };
+
   S.airVent = (k, out) => {
     k.chain(k.noise('white'), k.filter('highpass', 3500, 0.5), k.filter('lowpass', 9000, 0.5), k.gain(0.02), out);
+  };
+
+  // ---------- Yoga studio ----------
+
+  // Slow, warm pad chords: each one swells in over a few seconds and melts into the next.
+  const YOGA_CHORDS = [[50, 57, 62, 66, 69], [47, 54, 59, 62, 66], [43, 50, 55, 59, 64], [45, 52, 57, 61, 64]];
+  S.yogaPad = (k, out) => {
+    const lp = k.filter('lowpass', 1300, 0.5);
+    lp.connect(out);
+    let i = Math.floor(rand(0, YOGA_CHORDS.length));
+    k.every(11000, 11000, () => {
+      YOGA_CHORDS[i++ % YOGA_CHORDS.length].forEach((m, j) => {
+        [-5, 5].forEach((det) => k.tone({ type: j === 0 ? 'sine' : 'triangle', freq: mtof(m), detune: det, attack: 4, hold: 6, decay: 6, gain: j === 0 ? 0.03 : 0.011, dest: lp, pan: rand(-0.4, 0.4) }));
+      });
+    }, 0);
+  };
+
+  // A breathy bamboo flute playing a few unhurried notes now and then (D major pentatonic).
+  const FLUTE = [62, 64, 66, 69, 71, 74, 76];
+  S.flute = (k, out) => {
+    k.every(20000, 45000, () => {
+      let w = 0;
+      let n = Math.floor(rand(1, FLUTE.length - 1));
+      const notes = Math.floor(rand(3, 6));
+      for (let i = 0; i < notes; i++) {
+        const len = i === notes - 1 ? rand(2.2, 3.2) : rand(0.7, 1.4);
+        const f = mtof(FLUTE[n]);
+        k.tone({ freq: f, when: w, attack: 0.25, hold: len * 0.6, decay: len * 0.6, gain: 0.03, vibrato: { rate: 5, depth: f * 0.006 }, filter: { type: 'lowpass', freq: 2400 } });
+        k.burst({ type: 'pink', when: w, attack: 0.15, hold: len * 0.5, decay: len * 0.5, gain: 0.004, filter: 'bandpass', freq: f * 2, Q: 2 });
+        w += len * 0.95;
+        n = Math.max(0, Math.min(FLUTE.length - 1, n + pick([-2, -1, -1, 1, 1, 2])));
+      }
+    }, 6000);
+  };
+
+  // Wind chimes on the terrace: a few bright, ringing notes when the breeze picks up.
+  const CHIMES = [81, 83, 86, 88, 90, 93];
+  S.windChimes = (k, out) => {
+    k.every(5000, 14000, () => {
+      const n = Math.floor(rand(2, 6));
+      let w = 0;
+      for (let i = 0; i < n; i++) {
+        const f = mtof(pick(CHIMES));
+        const pan = rand(-0.7, 0.7);
+        k.tone({ freq: f, when: w, attack: 0.002, decay: rand(2, 3.5), gain: rand(0.008, 0.016), pan });
+        k.tone({ freq: f * 2.76, when: w, attack: 0.002, decay: 0.8, gain: 0.003, pan });
+        w += rand(0.12, 0.45);
+      }
+    }, 2000);
   };
 
   // ---------- Space ----------

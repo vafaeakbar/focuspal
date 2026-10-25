@@ -3189,7 +3189,7 @@
   };
 
   // ======================================================================
-  // HAMMAM SPA
+  // OASIS SPA (a domed steam room)
   // ======================================================================
   // Eight-pointed star outline, used for the skylights cut into the dome.
   function starPath(c, x, y, r) {
@@ -4161,20 +4161,38 @@
         c.fillStyle = '#c9cdd3';
         c.fillRect(xs[0] - winW * 0.18, cy - winH * 0.2, winW * 0.36, 7);
         c.restore();
-        // passenger service panel: reading light and the seatbelt sign
+        // passenger service panel: the seatbelt sign (it blinks for a few seconds as it comes on) and reading lights
+        const since = r.belt ? r.c - 300 : 99;
+        const lit = r.belt && (since > 4 || Math.floor(since * 2.5) % 2 === 0);
         c.fillStyle = '#c3c8cf';
         roundRect(c, psu.x, psu.y, 170, 40, 10);
         c.fill();
-        c.fillStyle = r.belt ? '#ffb347' : '#8d939b';
-        roundRect(c, psu.x + 10, psu.y + 8, 64, 24, 6);
+        c.fillStyle = lit ? '#ffb347' : '#8d939b';
+        roundRect(c, psu.x + 10, psu.y + 6, 64, 28, 6);
         c.fill();
-        c.fillStyle = r.belt ? '#3b2410' : '#c3c8cf';
-        c.font = '700 11px Inter, sans-serif';
-        c.textAlign = 'center';
-        c.fillText('BELT', psu.x + 42, psu.y + 24);
-        if (r.belt) {
+        // a seated figure with its belt across the lap
+        const ix = psu.x + 42, iy = psu.y + 20, ink = lit ? '#3b2410' : '#b3b9c1';
+        c.fillStyle = ink;
+        c.beginPath();
+        c.arc(ix - 4, iy - 8, 3.2, 0, TAU);
+        c.fill();
+        c.strokeStyle = ink;
+        c.lineWidth = 3;
+        c.lineCap = 'round';
+        c.beginPath();
+        c.moveTo(ix - 5, iy - 3);
+        c.lineTo(ix - 5, iy + 5);
+        c.lineTo(ix + 5, iy + 5);
+        c.lineTo(ix + 5, iy + 11);
+        c.stroke();
+        c.lineWidth = 2;
+        c.beginPath();
+        c.moveTo(ix - 11, iy + 2);
+        c.lineTo(ix + 9, iy + 2);
+        c.stroke();
+        if (lit) {
           c.globalCompositeOperation = 'lighter';
-          glow(c, psu.x + 42, psu.y + 20, 50, 'rgba(255,170,60,A)', 0.35);
+          glow(c, psu.x + 42, psu.y + 20, 54, 'rgba(255,170,60,A)', since < 4 ? 0.5 : 0.35);
           c.globalCompositeOperation = 'source-over';
         }
         c.fillStyle = '#f5f2e8';
@@ -4183,6 +4201,263 @@
         c.arc(psu.x + 145, psu.y + 20, 9, 0, TAU);
         c.fill();
         c.restore();
+      },
+    };
+  };
+
+  // ======================================================================
+  // YOGA STUDIO (by the sea)
+  // ======================================================================
+  scenes.yoga = (w, h, dpr) => {
+    const floorY = h * 0.66;
+    const winTop = h * 0.1, winBot = floorY - h * 0.05;
+    const nWin = w > 1000 ? 4 : w > 640 ? 3 : 2;
+    const gap = Math.max(18, w * 0.02);
+    const margin = w * 0.05;
+    const winW = (w - margin * 2 - gap * (nWin - 1)) / nWin;
+    const wins = Array.from({ length: nWin }, (_, i) => margin + i * (winW + gap));
+    const seaY = winTop + (winBot - winTop) * 0.62;
+    // a mat in perspective: centre x on the floor, depth 0 (back) .. 1 (front)
+    const vpX = w / 2, vpY = h * 0.3;
+    const persp = (x, y) => [vpX + (x - vpX) * ((y - vpY) / (h - vpY)), y];
+
+    const room = layer(w, h, dpr, (c) => {
+      // the view: morning sky, the sea and a palm or two
+      c.fillStyle = vGrad(c, winTop, seaY, [[0, '#a8d4ee'], [0.75, '#f6e7cf'], [1, '#fbe2bf']]);
+      c.fillRect(0, winTop, w, seaY - winTop);
+      glow(c, w * 0.7, seaY - h * 0.05, h * 0.35, 'rgba(255,240,200,A)', 0.6);
+      c.fillStyle = vGrad(c, seaY, winBot, [[0, '#7fbcc9'], [1, '#4e98a8']]);
+      c.fillRect(0, seaY, w, winBot - seaY);
+      [w * 0.12, w * 0.9].forEach((x, i) => palmTree(c, x, winBot + 6, (winBot - winTop) / (i ? 260 : 220)));
+      // wall with the windows cut out
+      const wall = layer(w, h, 1, (x) => {
+        x.fillStyle = vGrad(x, 0, floorY, [[0, '#efe6d8'], [1, '#e6d9c5']]);
+        x.fillRect(0, 0, w, floorY);
+        x.globalCompositeOperation = 'destination-out';
+        wins.forEach((wx) => x.fillRect(wx, winTop, winW, winBot - winTop));
+      });
+      c.drawImage(wall, 0, 0, w, h);
+      // window frames and mullions
+      c.strokeStyle = '#a07c58';
+      c.lineWidth = 6;
+      wins.forEach((wx) => {
+        c.strokeRect(wx, winTop, winW, winBot - winTop);
+        c.lineWidth = 3;
+        c.beginPath();
+        c.moveTo(wx + winW / 2, winTop);
+        c.lineTo(wx + winW / 2, winBot);
+        c.moveTo(wx, winTop + (winBot - winTop) * 0.3);
+        c.lineTo(wx + winW, winTop + (winBot - winTop) * 0.3);
+        c.stroke();
+        c.lineWidth = 6;
+      });
+      c.fillStyle = '#c9a77f';
+      c.fillRect(0, winBot, w, 10);
+      // wooden floor in one-point perspective
+      c.fillStyle = vGrad(c, floorY, h, [[0, '#d2ad80'], [1, '#e2c095']]);
+      c.fillRect(0, floorY, w, h - floorY);
+      c.strokeStyle = 'rgba(120,80,45,0.18)';
+      c.lineWidth = 1;
+      for (let i = -24; i <= 24; i++) {
+        c.beginPath();
+        c.moveTo(...persp(vpX + i * 70, floorY));
+        c.lineTo(...persp(vpX + i * 70, h));
+        c.stroke();
+      }
+      c.fillStyle = 'rgba(0,0,0,0.08)';
+      c.fillRect(0, floorY, w, 5);
+      // yoga mats
+      const mat = (cx, y0, y1, half, col, stripe) => {
+        const [ax, ay] = persp(cx - half, y0), [bx] = persp(cx + half, y0), [cx2, cy2] = persp(cx + half, y1), [dx] = persp(cx - half, y1);
+        c.fillStyle = 'rgba(60,40,20,0.15)';
+        c.beginPath();
+        c.moveTo(ax + 4, ay + 4); c.lineTo(bx + 4, ay + 4); c.lineTo(cx2 + 4, cy2 + 4); c.lineTo(dx + 4, cy2 + 4);
+        c.fill();
+        c.fillStyle = col;
+        c.beginPath();
+        c.moveTo(ax, ay); c.lineTo(bx, ay); c.lineTo(cx2, cy2); c.lineTo(dx, cy2);
+        c.closePath();
+        c.fill();
+        c.strokeStyle = stripe;
+        c.lineWidth = 2;
+        c.beginPath();
+        const [sx0] = persp(cx - half * 0.8, y0), [sx1] = persp(cx - half * 0.8, y1);
+        c.moveTo(sx0, y0 + 3);
+        c.lineTo(sx1, y1 - 3);
+        c.stroke();
+      };
+      mat(w * 0.16, floorY + (h - floorY) * 0.2, h * 0.98, w * 0.07, '#9cb89a', 'rgba(255,255,255,0.35)');
+      mat(w * 0.5, floorY + (h - floorY) * 0.15, h * 0.9, w * 0.07, '#d08a6a', 'rgba(255,255,255,0.3)');
+      mat(w * 0.84, floorY + (h - floorY) * 0.2, h * 0.98, w * 0.07, '#e3cfae', 'rgba(150,110,70,0.3)');
+      // cork blocks and a bolster on the right mat
+      const by = floorY + (h - floorY) * 0.42;
+      c.fillStyle = '#c69a62';
+      roundRect(c, w * 0.8, by, 34, 22, 4);
+      c.fill();
+      roundRect(c, w * 0.8 + 40, by + 6, 34, 22, 4);
+      c.fill();
+      c.fillStyle = '#5f7f8f';
+      roundRect(c, w * 0.78, by + 40, Math.min(150, w * 0.1), 30, 15);
+      c.fill();
+      // monstera in a pot, left corner
+      const mx = Math.max(60, w * 0.05), my = floorY + 30;
+      c.fillStyle = '#c4805f';
+      c.beginPath();
+      c.moveTo(mx - 30, my - 50); c.lineTo(mx + 30, my - 50); c.lineTo(mx + 22, my); c.lineTo(mx - 22, my);
+      c.fill();
+      c.fillStyle = '#3f7d4f';
+      for (let i = 0; i < 7; i++) {
+        const a = -Math.PI / 2 + (i - 3) * 0.42;
+        const len = rand(70, 120);
+        c.save();
+        c.translate(mx + Math.cos(a) * len * 0.75, my - 50 + Math.sin(a) * len * 0.75);
+        c.rotate(a + Math.PI / 2);
+        c.beginPath();
+        c.ellipse(0, 0, 22, 30, 0, 0, TAU);
+        c.fill();
+        c.restore();
+      }
+      // a singing bowl on a cushion, right foreground
+      const sx = w - Math.max(90, w * 0.08), sy = h - 40;
+      c.fillStyle = '#7a3f4a';
+      c.beginPath();
+      c.ellipse(sx, sy, 46, 16, 0, 0, TAU);
+      c.fill();
+      c.fillStyle = '#c99a4a';
+      c.beginPath();
+      c.moveTo(sx - 30, sy - 22);
+      c.quadraticCurveTo(sx - 28, sy + 2, sx, sy + 2);
+      c.quadraticCurveTo(sx + 28, sy + 2, sx + 30, sy - 22);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#e2bd6e';
+      c.beginPath();
+      c.ellipse(sx, sy - 22, 30, 7, 0, 0, TAU);
+      c.fill();
+      // low stool with the incense holder, left foreground
+      const ix = Math.max(150, w * 0.17), iy = h - 46;
+      c.fillStyle = '#8a5f3c';
+      roundRect(c, ix - 50, iy, 100, 12, 4);
+      c.fill();
+      c.fillRect(ix - 44, iy + 12, 8, 30);
+      c.fillRect(ix + 36, iy + 12, 8, 30);
+      c.fillStyle = '#3d3a36';
+      c.beginPath();
+      c.ellipse(ix, iy - 2, 14, 5, 0, 0, TAU);
+      c.fill();
+      c.strokeStyle = '#6b3d2a';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(ix, iy - 4);
+      c.lineTo(ix + 10, iy - 60);
+      c.stroke();
+    });
+
+    const curtains = wins.flatMap((wx) => [{ x: wx, side: 1 }, { x: wx + winW, side: -1 }]).map((cu) => ({ ...cu, ph: rand(0, TAU) }));
+    const smokeX = Math.max(150, w * 0.17) + 10, smokeY = h - 46 - 62;
+    const dust = motes(40, { x: 0, y: winTop, w, h: h - winTop });
+    const hang = [Math.max(40, w * 0.04), w - Math.max(40, w * 0.04)];
+    let boatX = rand(0, w);
+
+    return {
+      draw(c, t, dt) {
+        c.drawImage(room, 0, 0, w, h);
+        // glints on the sea and a dhow sailing slowly across, seen through the glass
+        c.save();
+        c.beginPath();
+        wins.forEach((wx) => c.rect(wx, winTop, winW, winBot - winTop));
+        c.clip();
+        c.fillStyle = 'rgba(255,255,255,0.55)';
+        for (let i = 0; i < 26; i++) {
+          const gx = (i * 137.5 + t * 6) % w, gy = seaY + 6 + ((i * 53) % (winBot - seaY - 10));
+          c.globalAlpha = 0.25 + 0.35 * Math.sin(t * 1.4 + i);
+          c.fillRect(gx, gy, 14, 1.5);
+        }
+        c.globalAlpha = 1;
+        boatX = (boatX + dt * 7) % (w + 160);
+        const bx = boatX - 80, by = seaY + 8;
+        c.fillStyle = '#6b4a2c';
+        c.beginPath();
+        c.moveTo(bx - 28, by); c.lineTo(bx + 30, by); c.lineTo(bx + 20, by + 8); c.lineTo(bx - 22, by + 8);
+        c.fill();
+        c.fillStyle = '#f4ede0';
+        c.beginPath();
+        c.moveTo(bx - 2, by - 2); c.lineTo(bx + 22, by - 34); c.lineTo(bx + 18, by - 2);
+        c.fill();
+        c.restore();
+        // sunbeams falling across the floor
+        c.globalCompositeOperation = 'lighter';
+        wins.forEach((wx, i) => {
+          const a = 0.07 + 0.025 * Math.sin(t * 0.3 + i);
+          const g = c.createLinearGradient(wx, winTop, wx - w * 0.1, h);
+          g.addColorStop(0, `rgba(255,236,190,${a})`);
+          g.addColorStop(1, 'rgba(255,236,190,0)');
+          c.fillStyle = g;
+          c.beginPath();
+          c.moveTo(wx + winW * 0.1, winTop);
+          c.lineTo(wx + winW * 0.9, winTop);
+          c.lineTo(wx + winW * 0.7 - w * 0.12, h);
+          c.lineTo(wx - w * 0.16, h);
+          c.closePath();
+          c.fill();
+        });
+        c.globalCompositeOperation = 'source-over';
+        drawMotes(c, dust, { x: 0, y: winTop, w, h: h - winTop }, t, dt, '#fff6dc', 0.4);
+        // sheer curtains breathing in the breeze
+        for (const cu of curtains) {
+          const sway = Math.sin(t * 0.6 + cu.ph) * 6 + Math.sin(t * 1.3 + cu.ph * 2) * 3;
+          const cw = winW * 0.16;
+          c.fillStyle = 'rgba(255,255,255,0.45)';
+          c.beginPath();
+          c.moveTo(cu.x, winTop - 6);
+          c.lineTo(cu.x + cu.side * cw, winTop - 6);
+          c.quadraticCurveTo(cu.x + cu.side * (cw + sway), (winTop + winBot) / 2, cu.x + cu.side * (cw * 0.8 + sway * 1.6), winBot + 4);
+          c.lineTo(cu.x, winBot + 4);
+          c.closePath();
+          c.fill();
+        }
+        // hanging plants swaying gently in the top corners
+        hang.forEach((hx, i) => {
+          const sw = Math.sin(t * 0.7 + i * 2) * 0.05;
+          c.save();
+          c.translate(hx, 0);
+          c.rotate(sw);
+          c.strokeStyle = '#8a6b4a';
+          c.lineWidth = 1.5;
+          c.beginPath();
+          c.moveTo(0, 0);
+          c.lineTo(0, h * 0.14);
+          c.stroke();
+          c.fillStyle = '#e8dccb';
+          c.beginPath();
+          c.ellipse(0, h * 0.15, 22, 14, 0, 0, Math.PI);
+          c.fill();
+          c.fillStyle = '#4f8f5a';
+          for (let k = 0; k < 9; k++) {
+            const vx = (k - 4) * 6, len = 30 + ((k * 37) % 50);
+            for (let j = 0; j < 4; j++) {
+              c.beginPath();
+              c.ellipse(vx + Math.sin(t + k + j) * 1.5, h * 0.15 + 6 + j * len / 4, 5, 3.5, 0.5, 0, TAU);
+              c.fill();
+            }
+          }
+          c.restore();
+        });
+        // incense smoke curling up
+        c.strokeStyle = 'rgba(240,240,240,0.4)';
+        c.lineWidth = 1.6;
+        c.beginPath();
+        c.moveTo(smokeX, smokeY);
+        for (let k = 1; k <= 30; k++) {
+          const yy = smokeY - k * 6;
+          const xx = smokeX + Math.sin(k * 0.35 - t * 1.2) * (2 + k * 0.5);
+          c.lineTo(xx, yy);
+        }
+        c.stroke();
+        c.fillStyle = '#ff8a3d';
+        c.beginPath();
+        c.arc(smokeX, smokeY + 1, 1.8, 0, TAU);
+        c.fill();
       },
     };
   };

@@ -151,7 +151,7 @@
       ],
     },
     {
-      id: 'spa', name: 'Hammam Spa', emoji: '🧖', accent: '#7cc6b8', scene: 'spa', unlock: 0,
+      id: 'spa', name: 'Oasis Spa', emoji: '🧖', accent: '#7cc6b8', scene: 'spa', unlock: 0,
       tagline: 'Warm stone, mosaic tiles and steam under a starlit dome, with a trickling fountain and the hum of a singing bowl.',
       layers: [
         { id: 'fountain', name: 'Basin fountain', vol: 0.4, gain: 1.1, reverb: 0.4, create: (k, o) => S.water(k, o, { lp: 2400, level: 0.8 }) },
@@ -186,9 +186,21 @@
       id: 'plane', name: 'Airplane Cabin', emoji: '✈️', accent: '#6fa8dc', scene: 'plane', unlock: 0,
       tagline: 'A window seat above the clouds: the steady hush of the engines, the wing in the sun, nowhere to be until you land.',
       layers: [
-        { id: 'cabin', name: 'Cabin hum', vol: 0.55, gain: 1, create: (k, o) => S.cabin(k, o) },
+        { id: 'cabin', name: 'Cabin hum & seatbelt sign', vol: 0.55, gain: 1, create: (k, o) => S.cabin(k, o) },
+        { id: 'captain', name: 'Pilot announcements', vol: 0.5, gain: 1, reverb: 0.15, create: (k, o) => S.announcements(k, o) },
         { id: 'vent', name: 'Air vent', vol: 0.25, gain: 7, create: (k, o) => S.airVent(k, o) },
         { speech: true, id: 'passengers', name: 'Other passengers', vol: 0.15, gain: 0.3, reverb: 0.1, create: (k, o) => S.crowd(k, o, { sample: 'cafe-crowd', lp: 700, hp: 150 }) },
+      ],
+    },
+    {
+      id: 'yoga', name: 'Yoga Studio', emoji: '🧘', accent: '#9cc5a1', scene: 'yoga', unlock: 0, light: true,
+      tagline: 'A sunlit studio by the sea: wooden floors, mats and plants, soft music, wind chimes and a curl of incense.',
+      layers: [
+        { id: 'music', name: 'Calm music', vol: 0.45, gain: 1.8, reverb: 0.5, create: (k, o) => S.yogaPad(k, o) },
+        { id: 'flute', name: 'Bamboo flute', vol: 0.35, gain: 4, reverb: 0.7, create: (k, o) => S.flute(k, o) },
+        { id: 'chimes', name: 'Wind chimes', vol: 0.3, gain: 6, reverb: 0.6, create: (k, o) => S.windChimes(k, o) },
+        { id: 'birds', name: 'Morning birds', vol: 0.3, gain: 6, reverb: 0.35, create: (k, o) => S.birds(k, o, { min: 4000, max: 10000 }) },
+        { id: 'sea', name: 'Sea outside', vol: 0.25, gain: 1.15, create: (k, o) => S.waves(k, o) },
       ],
     },
   ];

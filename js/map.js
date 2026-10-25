@@ -27,7 +27,8 @@
     spa: { x: 540, y: 850, h: 118 },
     bus: { x: 402, y: 888, h: 76 },
     train: { x: 1268, y: 626, h: 86 },
-    plane: { x: 1060, y: 884, h: 96 },
+    plane: { x: 860, y: 896, h: 40 },
+    yoga: { x: 1428, y: 748, h: 86 },
   };
 
   // ---------- geometry helpers ----------
@@ -356,15 +357,17 @@
         <path d="M-40 -50 V-58 M-40 -58 L-24 -66 M-40 -58 L-56 -66" stroke="#3b4a5a" stroke-width="2"/>
         <rect x="-60" y="-14" width="10" height="4" fill="#3b4a5a"/>`;
     },
-    // The little blue plane loops above the airport; click it to board.
-    plane: () => {
-      const loop = 'M-84 -58 a84 30 0 1 0 168 0 a84 30 0 1 0 -168 0';
-      const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const fly = still ? 'transform="translate(0 -58)"' : '';
-      const motion = still ? '' : `<animateMotion dur="14s" repeatCount="indefinite" rotate="auto" path="${loop}"/>`;
-      return `<path d="${loop}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-dasharray="3 9" stroke-linecap="round"/>
-        <g ${fly}>${motion}<g transform="scale(1.7)">${topPlane('#3c6fd1')}</g></g>`;
-    },
+    // The little blue plane taxis down the runway and takes off (CSS); click it to board.
+    plane: () => `<g class="map-jet">${topPlane('#3c6fd1')}</g>`,
+    yoga: () => `<ellipse cx="0" cy="3" rx="76" ry="11" fill="rgba(0,0,0,.16)"/>
+        <rect x="-70" y="-8" width="140" height="10" rx="2" fill="#b98a5c" stroke="#7d5f3c" stroke-width="2"/>
+        <rect x="-56" y="-60" width="112" height="52" fill="#f4ece0" stroke="#8a6b48" stroke-width="2.5"/>
+        <g fill="#bfe3f2" stroke="#8a6b48" stroke-width="1.5"><rect x="-48" y="-52" width="28" height="40"/><rect x="-14" y="-52" width="28" height="40"/><rect x="20" y="-52" width="28" height="40"/></g>
+        <path d="M-34 -52 V-12 M0 -52 V-12 M34 -52 V-12" stroke="rgba(255,255,255,.7)" stroke-width="5"/>
+        <path d="M-66 -60 H66 L58 -70 H-58Z" fill="#9cc5a1" stroke="#5d8a63" stroke-width="2"/>
+        <g transform="translate(0 -82)"><circle r="13" fill="#fff" stroke="#9cc5a1" stroke-width="2.5"/>
+          <path d="M0 6 C-3 1 -3 -4 0 -8 C3 -4 3 1 0 6Z M0 6 C-6 4 -9 0 -9 -4 C-5 -3 -2 0 0 6Z M0 6 C6 4 9 0 9 -4 C5 -3 2 0 0 6Z" fill="#d08a6a"/></g>
+        <g transform="translate(-74 -6)"><rect x="-6" y="-14" width="12" height="14" fill="#c4805f"/><path d="M0 -14 Q-12 -30 -8 -40 M0 -14 Q2 -34 6 -42 M0 -14 Q12 -28 12 -36" stroke="#4f8f5a" stroke-width="4" fill="none" stroke-linecap="round"/></g>`,
     space: () => `<ellipse cx="0" cy="2" rx="62" ry="15" fill="#b9c0c7" stroke="#8a939c" stroke-width="3"/>
         <ellipse cx="0" cy="-1" rx="34" ry="7" fill="#9aa3ab"/>
         <g stroke="#d0543c" stroke-width="3" fill="none"><path d="M-56 0 V-132 M-40 0 V-132 M-56 -132 H-40"/><path d="M-56 -10 L-40 -30 L-56 -50 L-40 -70 L-56 -90 L-40 -110 L-56 -130"/><path d="M-40 -96 H-16"/></g>
@@ -450,7 +453,7 @@
     [[880, 455], [945, 470], [700, 470], [1095, 470], [690, 570], [880, 680], [760, 690], [1120, 620]].forEach(([x, y], i) => {
       if (!blocked([x, y - 400]) || true) items.push([y, house(x, y, ['#fff4e2', '#f6d7c3', '#e3eef7', '#fff'][i % 4], ['#d0543c', '#4f7cac', '#e0a23a', '#6c8f4e'][i % 4])]);
     });
-    [[1400, 790, 0.7], [1440, 860, 0.6], [1190, 880, 0.65], [1360, 900, 0.55]].forEach(([x, y, s]) => items.push([y, palm(x, y, s)]));
+    [[1446, 862, 0.6], [1190, 880, 0.65], [1360, 900, 0.55]].forEach(([x, y, s]) => items.push([y, palm(x, y, s)]));
     items.sort((a, b) => a[0] - b[0]);
     out.push(items.map((i) => i[1]).join(''));
 

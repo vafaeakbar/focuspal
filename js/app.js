@@ -485,7 +485,7 @@
   // (focus or break) or sounds playing. If the device sleeps, browsers stop all audio.
   let wakeLock = null;
   const wantWakeLock = () => settings.wakeLock && !document.hidden
-    && (timer.running || FP.breathe.inSession || (entered && settings.soundOn && audio.active.size > 0));
+    && (timer.running || FP.breathe.inSession || (entered && settings.soundOn && audio.active.size > 0 && !FP.map.isOpen));
   async function requestWakeLock() {
     if (!('wakeLock' in navigator) || wakeLock) return;
     try {
@@ -589,7 +589,8 @@
 
   function applyDuck() {
     if (FP.breathe.isOpen) audio.setDuck(0.35);
-    else if (FP.map.isOpen && !FP.map.traveling) audio.setDuck(0.3);
+    // The map is a quiet place: the last place's sound fades out until you travel or resume.
+    else if (FP.map.isOpen && !FP.map.traveling) audio.setDuck(0);
     else audio.setDuck(settings.dimBreaks && timer.mode !== 'focus' ? 0.45 : 1);
   }
 

@@ -720,6 +720,18 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .vapor circle:nth-child(2) { animation-delay: -1s; }
 .vapor circle:nth-child(3) { animation-delay: -2s; }
 @keyframes vapor { 50% { transform: scale(1.35); opacity: .45; } }
+/* The Airplane Cabin landmark: the little jet taxis down the runway and takes off.
+   Positions are relative to the place's ground point on the runway (860, 896). */
+.map-jet { animation: takeoff 22s ease-in infinite; cursor: pointer; }
+@keyframes takeoff {
+  0% { transform: translate(-160px, 10px) rotate(0deg) scale(.8); opacity: 0; }
+  4% { transform: translate(-148px, 10px) rotate(0deg) scale(.8); opacity: 1; }
+  30% { transform: translate(150px, 10px) rotate(0deg) scale(.85); opacity: 1; }
+  40% { transform: translate(310px, -34px) rotate(-16deg) scale(1.05); opacity: 1; }
+  52% { transform: translate(560px, -176px) rotate(-22deg) scale(1.4); opacity: 0; }
+  100% { transform: translate(560px, -176px) rotate(-22deg) scale(1.4); opacity: 0; }
+}
+
 /* On phones the card becomes a bottom sheet that appears after tapping a place. */
 @media (max-width: 699px) {
   .map-card { left: 12px; right: 12px; top: auto; bottom: max(12px, env(safe-area-inset-bottom)); width: auto; }
