@@ -578,42 +578,42 @@
     });
   };
 
-  // The cabin PA: a two-tone chime, then the captain speaking in Arabic and then English,
-  // as on Gulf Air. The words come from the browser's own text-to-speech voices, so they
+  // The cabin PA: a two-tone chime, then the captain speaking in Arabic (Gulf dialect)
+  // and then English, as on Gulf Air. The words come from the browser's own text-to-speech voices, so they
   // can't run through the Web Audio graph; their volume follows the layer, the master
   // volume and any ducking instead. Without an Arabic voice, only the English is spoken.
   const CAPTAIN = [
     {
-      ar: 'سيداتي سادتي، معكم قائد الطائرة. نحلّق الآن على ارتفاع سبعة وثلاثين ألف قدم، والأجواء أمامنا هادئة. استرخوا واستمتعوا ببقية الرحلة.',
+      ar: 'هلا وغلا فيكم، معاكم كابتن الطيارة. احنا الحين طايرين على ارتفاع سبعة وثلاثين ألف قدم، والجو قدامنا هادي. ارتاحوا واستانسوا بباقي الرحلة.',
       en: 'Good afternoon, ladies and gentlemen, this is your captain speaking. We are cruising at thirty-seven thousand feet, and the skies ahead look smooth. Sit back and enjoy the rest of the flight.',
     },
     {
-      ar: 'مرحبًا مجددًا من قمرة القيادة. قطعنا نصف المسافة إلى البحرين، ونسير في موعدنا تمامًا. الطقس عند الوصول صافٍ مع نسيمٍ لطيف.',
+      ar: 'هلا فيكم مرة ثانية من الكابينة. قطعنا نص الطريق للبحرين، وماشين على الوقت بالضبط. والجو في البحرين صافي والهوا حلو.',
       en: 'Hello again from the flight deck. We are about halfway to Bahrain and right on schedule. The weather on arrival is clear, with a gentle breeze.',
     },
     {
-      ar: 'سيداتي سادتي، يمكنكم أن تروا من النوافذ على الجهة اليمنى بحرًا جميلًا من الغيوم تحتنا، ومن المتوقع أن تبقى الأجواء هادئة لبعض الوقت.',
+      ar: 'يا جماعة، لو تطالعون من الدرايش اللي على اليمين، بتشوفون بحر من الغيوم تحتنا، منظر ولا أحلى. والجو بيظل رايق شوي.',
       en: 'Ladies and gentlemen, if you look out of the windows on the right, you can see a beautiful sea of clouds below us. It should stay this calm for a while.',
     },
     {
-      ar: 'معكم قائد الطائرة. ساعدتنا الرياح الخلفية، لذا نتوقع الوصول قبل موعدنا ببضع دقائق. شكرًا لسفركم معنا اليوم.',
+      ar: 'معاكم الكابتن. الهوا ساعدنا من ورا، فبنوصل قبل الوقت بكم دقيقة. مشكورين إنكم مسافرين ويانا اليوم.',
       en: 'This is your captain. We have picked up a nice tailwind, so we expect to arrive a few minutes early. Thank you for flying with us today.',
     },
     {
-      ar: 'سيداتي سادتي، سيمرّ طاقم الضيافة بعد قليل لتقديم المشروبات الساخنة والماء. لا تترددوا في طلب ما تحتاجونه.',
+      ar: 'يا جماعة، طاقم الضيافة بيمرون عليكم بعد شوي بالمشروبات الحارة والماي. أي شي تبونه قولوا لهم.',
       en: 'Ladies and gentlemen, the cabin crew will be coming through shortly with hot drinks and water. Please let them know if there is anything you need.',
     },
     {
-      ar: 'تحية من قمرة القيادة. كل شيء يسير بسلاسة هنا. استفيدوا من هذا الوقت الهادئ للراحة أو القراءة أو إنجاز أعمالكم.',
+      ar: 'هلا من الكابينة. كل شي ماشي تمام عندنا. استغلوا هالوقت الرايق للراحة أو القراية أو خلّصوا شغلكم.',
       en: 'Good afternoon from the flight deck. Everything is running smoothly up here. Take this quiet time to rest, read or get some work done.',
     },
   ];
   const BELT_ON = {
-    ar: 'سيداتي سادتي، أضاء قائد الطائرة إشارة ربط أحزمة المقاعد، إذ نمرّ ببعض المطبات الهوائية الخفيفة. يُرجى العودة إلى مقاعدكم وإبقاء الأحزمة مربوطة.',
+    ar: 'يا جماعة، الكابتن شغّل إشارة الأحزمة، لأننا داخلين في شوية مطبات خفيفة. لو سمحتوا ارجعوا لمقاعدكم وخلوا الأحزمة مربوطة.',
     en: 'Ladies and gentlemen, the captain has turned on the fasten seatbelt sign. We are passing through some light turbulence. Please return to your seats and keep your seatbelts fastened.',
   };
   const BELT_OFF = {
-    ar: 'أطفأ قائد الطائرة إشارة ربط أحزمة المقاعد. يمكنكم الآن التنقّل في المقصورة، مع إبقاء الحزام مربوطًا أثناء الجلوس.',
+    ar: 'الكابتن طفّى إشارة الأحزمة، وتقدرون الحين تتحركون في الطيارة. بس وانتوا قاعدين خلوا الحزام مربوط.',
     en: 'The captain has turned off the fasten seatbelt sign. You are free to move about the cabin, but please keep your seatbelt fastened while you are seated.',
   };
   const voices = {};
