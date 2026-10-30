@@ -33,7 +33,7 @@
     support: {
       // Your Ko-fi page, e.g. 'https://ko-fi.com/yourname'. While empty, the
       // "Buy us a karak" buttons stay hidden.
-      kofi: '',
+      kofi: 'https://ko-fi.com/alajeer',
     },
     premium: {
       // Placeholder prices: replace with your own.
