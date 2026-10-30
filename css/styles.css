@@ -644,6 +644,22 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .dua-title { font-weight: 700; margin-bottom: 2px !important; }
 
 /* Product sign-off: Alajeer symbol + "by Alajeer", Arabic on its own line (brand book). */
+/* "Buy us a karak": a gentle Ko-fi link on the map, in the panel and now and then on a break. */
+.karak-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
+  background: rgba(255,255,255,.14); color: #fff; text-decoration: none; font: 600 13.5px Inter, sans-serif;
+  border: 1px solid rgba(255,255,255,.28); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.karak-chip:hover { background: rgba(255,255,255,.24); }
+.karak-note {
+  display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 14px; border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--text); text-decoration: none; font-size: 13.5px; line-height: 1.45;
+}
+.karak-note:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.karak-cup { font-size: 24px; }
+.phase-alert-karak { display: block; margin-top: 12px; color: var(--accent); font: 600 13.5px Inter, sans-serif; text-decoration: none; }
+.phase-alert-karak:hover { text-decoration: underline; }
 .endorse { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12.5px; }
 .endorse img { flex: 0 0 auto; }
 .endorse p { margin: 0; line-height: 1.5; }

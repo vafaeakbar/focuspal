@@ -30,6 +30,11 @@
       dedication: 'In loving memory of the founder',
       dedicationAr: 'إلى روح المؤسّس، رحمه الله',
     },
+    support: {
+      // Your Ko-fi page, e.g. 'https://ko-fi.com/yourname'. While empty, the
+      // "Buy us a karak" buttons stay hidden.
+      kofi: '',
+    },
     premium: {
       // Placeholder prices: replace with your own.
       priceMonthly: '$3.99',

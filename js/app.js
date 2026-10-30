@@ -457,6 +457,9 @@
     $('#phaseAlertSecondary').hidden = !waiting;
     $('#phaseAlertSecondary').textContent = isBreak ? 'Later' : 'Not yet';
     $('#phaseAlertBreathe').hidden = !isBreak;
+    // now and then (every eighth session, once you've done a few) mention the karak
+    const sessions = lifetimeSessions();
+    $('#phaseAlertKarak').hidden = !(karakUrl && isBreak && sessions >= 8 && sessions % 8 === 0);
     $('#phaseAlertNotify').hidden = !('Notification' in window) || settings.notify || Notification.permission === 'denied';
     exitZen();
     box.hidden = false;
@@ -1046,6 +1049,13 @@
       if (!timer.running) start();
     }
   });
+
+  // ---------- Buy us a karak (Ko-fi) ----------
+  // Hidden until FP.config.support.kofi holds a Ko-fi page link.
+  const karakUrl = /^https:\/\/ko-fi\.com\/[\w-]+\/?$/.test(FP.config.support.kofi) ? FP.config.support.kofi : '';
+  ['#mapKarak', '#panelKarak', '#phaseAlertKarak'].forEach((s) => { if (karakUrl) $(s).href = karakUrl; });
+  $('#mapKarak').hidden = !karakUrl;
+  $('#panelKarak').hidden = !karakUrl;
 
   // ---------- Panel ----------
   // One Settings button opens the panel on whichever tab was used last.
