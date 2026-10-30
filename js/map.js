@@ -743,7 +743,7 @@
       el.svg.querySelectorAll('.loc').forEach((g) => g.classList.remove('current'));
     }
     el.resume.hidden = !opts.hasEntered();
-    if (opts.hasEntered()) el.resume.textContent = `← Back to ${FP.envById(currentId).emoji} ${FP.envById(currentId).name}`;
+    if (opts.hasEntered()) el.resume.textContent = FP.t('← Back to {place}', { place: `${FP.envById(currentId).emoji} ${FP.envById(currentId).name}` });
     hideCard();
     refresh();
     requestAnimationFrame(() => {

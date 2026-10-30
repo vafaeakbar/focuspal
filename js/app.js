@@ -712,7 +712,7 @@
       b.className = 'immersion-opt' + (on ? ' active' : '');
       b.setAttribute('role', 'radio');
       b.setAttribute('aria-checked', on);
-      b.innerHTML = `<span class="immersion-icon" aria-hidden="true">${lvl.icon}</span><span class="immersion-name">${lvl.name}${id === 'balanced' ? ' <small>default</small>' : ''}</span>`;
+      b.innerHTML = `<span class="immersion-icon" aria-hidden="true">${lvl.icon}</span><span class="immersion-name">${lvl.name}${id === 'balanced' ? ` <small>${FP.t('default')}</small>` : ''}</span>`;
       b.title = lvl.blurb;
       b.addEventListener('click', () => setImmersion(id));
       box.appendChild(b);
@@ -861,7 +861,7 @@
       const row = document.createElement('div');
       row.className = 'mixer-row';
       const id = `mix-${e.id}-${l.id}`;
-      row.innerHTML = `<label class="mix-name" for="${id}">${l.name}${l.speech ? ' <small title="Voices are turned down and muffled during Calm focus so words can’t pull your attention.">· softer in Calm focus</small>' : ''}</label><input type="range" min="0" max="1" step="0.01" id="${id}">`;
+      row.innerHTML = `<label class="mix-name" for="${id}">${l.name}${l.speech ? ` <small title="${FP.t('Voices are turned down and muffled during Calm focus so words can’t pull your attention.')}">${FP.t('· softer in Calm focus')}</small>` : ''}</label><input type="range" min="0" max="1" step="0.01" id="${id}">`;
       if (l.action) {
         const b = document.createElement('button');
         b.className = 'mix-action';

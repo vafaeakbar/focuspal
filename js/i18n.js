@@ -234,6 +234,9 @@
     'The scene gently fades and slows during focus, then comes back to life on breaks.': 'يخفت المشهد ويتباطأ بلطف أثناء التركيز، ثم يعود إلى الحياة في الاستراحات.',
     'Immersive': 'غامر',
     'The full scene and motion all the time. The most atmospheric, and the most distracting.': 'المشهد كاملًا بحركته طوال الوقت. الأكثر حيوية، والأكثر تشتيتًا.',
+    'default': 'الافتراضي',
+    '· softer in Calm focus': '· أخفت في الوضع الهادئ',
+    'Voices are turned down and muffled during Calm focus so words can’t pull your attention.': 'تُخفَض الأصوات وتُكتَم في الوضع الهادئ حتى لا تشدّ الكلمات انتباهك.',
 
     // ---------- breathe ----------
     'Breathe': 'تنفّس',
@@ -274,6 +277,7 @@
     'Sounds here': 'أصوات المكان',
     'Focus here →': 'ركّز هنا ←',
     'Back to {name} →': '→ العودة إلى {name}',
+    '← Back to {place}': '→ العودة إلى {place}',
     '← Back': '→ رجوع',
     'Unlock all': 'فتح الكل',
     '{place} unlocks after {r} more focus sessions, or get every place now with Premium.': '{place} يُفتح بعد {r} من جلسات التركيز، أو احصل على كل الأماكن الآن مع بريميوم.',
