@@ -660,8 +660,16 @@
         if (a.speechMuffled || document.hidden) return;
         FP.emit('captain', lines);
         const done = () => FP.emit('captain-end');
-        if (!synth || !window.SpeechSynthesisUtterance) return setTimeout(done, 14000);
         const volume = Math.max(0, Math.min(1, out.gain.value * a.volume * a.duckLevel * 1.6));
+        // In the phone apps the phone's own voices speak (see native.js).
+        if (FP.native && FP.native.speak) {
+          const watch = setInterval(() => { if (!k.alive) FP.native.stopSpeaking(); }, 400);
+          FP.native.speak(['ar', 'en'].map((lang) => ({
+            text: lines[lang], lang: lang === 'ar' ? 'ar-SA' : 'en-GB', rate: lang === 'ar' ? 0.9 : 0.93, pitch: 0.92, volume,
+          }))).finally(() => { clearInterval(watch); done(); });
+          return;
+        }
+        if (!synth || !window.SpeechSynthesisUtterance) return setTimeout(done, 14000);
         const queue = ['ar', 'en'].map((lang) => {
           const v = pickVoice(lang);
           // never let an English voice read the Arabic (or the reverse)

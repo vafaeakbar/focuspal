@@ -79,6 +79,7 @@
     'Map': 'الخريطة',
     'Open the map (M)': 'افتح الخريطة (M)',
     'Time for a break': 'وقت الاستراحة',
+    'Focus session complete.': 'اكتملت جلسة التركيز.',
     'Back to focus': 'عودة إلى التركيز',
     'Break’s over': 'انتهت الاستراحة',
     'Ready for your next focus session?': 'هل أنت مستعد لجلسة التركيز التالية؟',

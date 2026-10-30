@@ -138,7 +138,11 @@
     { mode: 'focus', running: false, endAt: 0, remaining: secondsFor('focus'), total: secondsFor('focus'), cycle: 0 },
     store.get('timer', {}),
   );
-  const saveTimer = () => store.set('timer', timer);
+  const saveTimer = () => {
+    store.set('timer', timer);
+    // the phone apps book a lock-screen alert for the end of a running session
+    FP.emit('timer', { running: timer.running, endAt: timer.endAt, mode: timer.mode });
+  };
 
   let tasks = store.get('tasks', []);
   let currentTaskId = store.get('currentTask', null);
@@ -528,8 +532,10 @@
     if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
   }
   function updateWakeLock() {
-    if (wantWakeLock()) requestWakeLock();
+    const want = wantWakeLock();
+    if (want) requestWakeLock();
     else releaseWakeLock();
+    FP.emit('wakelock', want);
   }
 
   // After sleep, a phone call or another app's audio, the browser pauses ours. Resume it
@@ -1069,7 +1075,8 @@
 
   // ---------- Buy us a karak (Ko-fi) ----------
   // Hidden until FP.config.support.kofi holds a Ko-fi page link.
-  const karakUrl = /^https:\/\/ko-fi\.com\/[\w-]+\/?$/.test(FP.config.support.kofi) ? FP.config.support.kofi : '';
+  // Not in the phone apps: Apple and Google don't allow links to outside payment pages.
+  const karakUrl = !FP.native && /^https:\/\/ko-fi\.com\/[\w-]+\/?$/.test(FP.config.support.kofi) ? FP.config.support.kofi : '';
   ['#mapKarak', '#panelKarak', '#phaseAlertKarak'].forEach((s) => { if (karakUrl) $(s).href = karakUrl; });
   $('#mapKarak').hidden = !karakUrl;
   $('#panelKarak').hidden = !karakUrl;
