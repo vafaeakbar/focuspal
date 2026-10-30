@@ -14,36 +14,51 @@
   document.documentElement.classList.add('native-app', `native-${FP.native.platform}`);
 
   // ---------- break alerts while the app is in the background ----------
+  // Once the app leaves the screen its page may be frozen, so the alert is booked the moment
+  // a session starts and taken back whenever the timer stops or moves on. An alert already
+  // shown stays until the person is back in FocusPal: the page can also wake in the
+  // background (an automatic break starting, say) and must not clear it unseen.
+  // Separate ids for the two alerts: booking one clears any shown alert with the same id.
   const LN = P.LocalNotifications;
-  let timer = null;
+  const IDS = { focus: 1, rest: 2 };
+  const all = { notifications: [{ id: IDS.focus }, { id: IDS.rest }] };
   let asked = false;
-  window.addEventListener('fp:timer', (e) => { timer = e.detail; });
-  async function schedule() {
-    if (!LN || !timer || !timer.running || timer.endAt <= Date.now() + 1000) return;
-    try {
-      const toBreak = timer.mode === 'focus';
-      await LN.schedule({
-        notifications: [{
-          id: 1,
-          title: FP.t(toBreak ? 'Time for a break' : 'Break’s over'),
-          body: FP.t(toBreak ? 'Focus session complete.' : 'Ready for your next focus session?'),
-          schedule: { at: new Date(timer.endAt), allowWhileIdle: true },
-        }],
+  // Android lets timer apps ring on time; if that's ever switched off, book a regular alarm
+  // rather than let the plugin open the "Alarms & reminders" settings mid-session.
+  const exactAllowed = () => (FP.native.platform !== 'android' ? Promise.resolve(true)
+    : LN.checkExactNotificationSetting().then((s) => s.exact_alarm === 'granted', () => false));
+  async function schedule(timer) {
+    const toBreak = timer.mode === 'focus';
+    return LN.schedule({
+      notifications: [{
+        id: toBreak ? IDS.focus : IDS.rest,
+        title: FP.t(toBreak ? 'Time for a break' : 'Break’s over'),
+        body: FP.t(toBreak ? 'Focus session complete.' : 'Ready for your next focus session?'),
+        schedule: { at: new Date(timer.endAt), allowWhileIdle: true },
+        isExactNotification: await exactAllowed(),
+      }],
+    });
+  }
+  if (LN) {
+    let queue = Promise.resolve(); // one change at a time, so an old booking can't land last
+    window.addEventListener('fp:timer', (e) => {
+      const timer = e.detail;
+      const book = timer.running && timer.endAt > Date.now() + 1000;
+      queue = queue
+        .then(() => LN.cancel(all)).catch(() => {})
+        .then(() => (book ? schedule(timer) : null)).catch(() => { /* notifications unavailable */ });
+      // Ask once, on the first start, so the question makes sense when it appears.
+      if (!asked && timer.running) {
+        asked = true;
+        LN.checkPermissions().then((p) => (p.display === 'granted' ? null : LN.requestPermissions())).catch(() => {});
+      }
+    });
+    if (P.App) {
+      P.App.addListener('appStateChange', (st) => {
+        if (st.isActive) LN.removeDeliveredNotifications({ notifications: all.notifications.map((n) => ({ ...n, title: '', body: '' })) }).catch(() => {});
       });
-    } catch (err) { /* notifications unavailable */ }
-  }
-  function cancel() {
-    if (LN) LN.cancel({ notifications: [{ id: 1 }] }).catch(() => {});
-  }
-  // While FocusPal is on screen its own alert handles the moment; only book one when it leaves.
-  document.addEventListener('visibilitychange', () => (document.hidden ? schedule() : cancel()));
-  // Ask once, on the first start, so the question makes sense when it appears.
-  window.addEventListener('fp:timer', (e) => {
-    if (!asked && LN && e.detail.running) {
-      asked = true;
-      LN.checkPermissions().then((p) => (p.display === 'granted' ? null : LN.requestPermissions())).catch(() => {});
     }
-  });
+  }
 
   // ---------- keeping the screen awake ----------
   const KA = P.KeepAwake;
