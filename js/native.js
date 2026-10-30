@@ -72,9 +72,10 @@
   // ---------- the captain's voice ----------
   const TTS = P.TextToSpeech;
   if (TTS) {
-    // Each line in turn; a language the phone has no voice for is skipped.
-    FP.native.speak = async (queue) => {
+    // Each line in turn, until stopped; a language the phone has no voice for is skipped.
+    FP.native.speak = async (queue, stopped = () => false) => {
       for (const u of queue) {
+        if (stopped()) return;
         try {
           await TTS.speak({ text: u.text, lang: u.lang, rate: u.rate, pitch: u.pitch, volume: u.volume, category: 'playback' });
         } catch (err) { /* no voice for this language */ }

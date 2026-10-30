@@ -663,10 +663,13 @@
         const volume = Math.max(0, Math.min(1, out.gain.value * a.volume * a.duckLevel * 1.6));
         // In the phone apps the phone's own voices speak (see native.js).
         if (FP.native && FP.native.speak) {
-          const watch = setInterval(() => { if (!k.alive) FP.native.stopSpeaking(); }, 400);
+          let over = false;
+          const finish = () => { if (!over) { over = true; clearInterval(watch); done(); } };
+          // stop talking, and take the caption down, if the layer is switched off or the place changes
+          const watch = setInterval(() => { if (!k.alive) { FP.native.stopSpeaking(); finish(); } }, 400);
           FP.native.speak(['ar', 'en'].map((lang) => ({
             text: lines[lang], lang: lang === 'ar' ? 'ar-SA' : 'en-GB', rate: lang === 'ar' ? 0.9 : 0.93, pitch: 0.92, volume,
-          }))).finally(() => { clearInterval(watch); done(); });
+          })), () => over).finally(finish);
           return;
         }
         if (!synth || !window.SpeechSynthesisUtterance) return setTimeout(done, 14000);

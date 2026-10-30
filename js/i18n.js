@@ -253,6 +253,7 @@
     'Hold': 'احبس',
     'Breathe out': 'زفير',
     'End': 'إنهاء',
+    '{time} left': 'متبقٍ {time}',
     'Well done': 'أحسنت',
     'You breathed slowly for {mins} minutes. Notice how you feel before you go back.': 'تنفّست ببطء لمدة {dur}. لاحظ شعورك قبل أن تعود.',
     'Back to FocusPal': 'العودة إلى التطبيق',

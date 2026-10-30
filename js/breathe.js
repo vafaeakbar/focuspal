@@ -93,7 +93,7 @@
       session.resumed = false;
     }
     el.count.textContent = Math.ceil(remain);
-    el.left.textContent = `${fmt(Math.ceil(session.total - e))} left`;
+    el.left.textContent = FP.t('{time} left', { time: fmt(Math.ceil(session.total - e)) });
   }
 
   function begin(minutes = prefs.minutes) {
