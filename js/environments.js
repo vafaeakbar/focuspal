@@ -205,5 +205,12 @@
     },
   ];
 
+  // In an Arabic interface every place, its description and its sounds read in Arabic.
+  FP.environments.forEach((e) => {
+    e.name = FP.t(e.name);
+    e.tagline = FP.t(e.tagline);
+    e.layers.forEach((l) => { l.name = FP.t(l.name); });
+  });
+
   FP.envById = (id) => FP.environments.find((e) => e.id === id) || FP.environments[1];
 })();

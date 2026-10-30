@@ -99,6 +99,10 @@
       idle: FULL,
     },
   };
+  // In an Arabic interface the techniques, tips and immersion levels read in Arabic.
+  Object.values(TECHNIQUES).forEach((x) => { x.name = FP.t(x.name); x.blurb = FP.t(x.blurb); x.best = FP.t(x.best); });
+  Object.values(TIPS).forEach((list) => list.forEach((tip) => { tip[1] = FP.t(tip[1]); }));
+  Object.values(IMMERSION).forEach((x) => { x.name = FP.t(x.name); x.blurb = FP.t(x.blurb); });
 
   // ---------- Settings & state ----------
   const DEFAULTS = {
@@ -184,7 +188,8 @@
   function lockedMessage(id) {
     const e = FP.envById(id);
     const r = lockInfo(id).remaining;
-    return `${e.emoji} ${e.name} unlocks after ${r} more focus session${r === 1 ? '' : 's'}, or get every place now with Premium.`;
+    return FP.t('{place} unlocks after {r} more focus sessions, or get every place now with Premium.', { place: `${e.emoji} ${e.name}`, r },
+      `${e.emoji} ${e.name} unlocks after ${r} more focus session${r === 1 ? '' : 's'}, or get every place now with Premium.`);
   }
 
   // Number keys 1–9 then 0 pick the first ten places.
@@ -281,9 +286,9 @@
       if (fresh.length) {
         store.set('newPlaces', [...store.get('newPlaces', []), ...fresh]);
         if (!silent) {
-          const names = fresh.map((id) => `${FP.envById(id).emoji} ${FP.envById(id).name}`).join(' and ');
+          const names = fresh.map((id) => `${FP.envById(id).emoji} ${FP.envById(id).name}`).join(FP.t(' and '));
           setTimeout(() => {
-            toast(`🎉 New place unlocked: ${names}! Open the map to visit.`);
+            toast(FP.t('🎉 New place unlocked: {names}! Open the map to visit.', { names }));
             if (settings.chime) audio.chime('unlock');
           }, 4200);
         }
@@ -297,19 +302,19 @@
         // Now that the break has begun: a deferred Friday card, or a milestone card.
         if (!maybeShowFridayDua(4500)) maybeShowDua();
         if (settings.autoBreaks) start();
-        const kind = `${minutesFor(next)}-minute ${next === 'long' ? 'long ' : ''}break`;
-        announce('Time for a break', timer.running
-          ? `Focus session complete. Your ${kind} has started.`
-          : `Focus session complete. Time for a ${kind}.`, 'break');
+        const kind = FP.t(next === 'long' ? '{min}-minute long break' : '{min}-minute break', { min: minutesFor(next), dur: FP.dur(minutesFor(next)) });
+        announce(FP.t('Time for a break'), timer.running
+          ? FP.t('Focus session complete. Your {kind} has started.', { kind })
+          : FP.t('Focus session complete. Time for a {kind}.', { kind }), 'break');
       }
     } else {
       if (finished === 'long') timer.cycle = 0;
       setMode('focus');
       if (!silent) {
         if (settings.autoFocus) start();
-        announce(timer.running ? 'Back to focus' : 'Break’s over', timer.running
-          ? `Your ${minutesFor('focus')}-minute focus session has started.`
-          : 'Ready for your next focus session?', 'focus');
+        announce(FP.t(timer.running ? 'Back to focus' : 'Break’s over'), timer.running
+          ? FP.t('Your {min}-minute focus session has started.', { min: minutesFor('focus'), dur: FP.dur(minutesFor('focus')) })
+          : FP.t('Ready for your next focus session?'), 'focus');
       }
     }
     updateWakeLock();
@@ -329,7 +334,7 @@
   }
 
   // ---------- Rendering ----------
-  const MODE_NAMES = { focus: 'Focus', short: 'Short break', long: 'Long break' };
+  const MODE_NAMES = { focus: FP.t('Focus'), short: FP.t('Short break'), long: FP.t('Long break') };
 
   function renderTime() {
     const r = timer.remaining;
@@ -348,11 +353,11 @@
     document.body.dataset.mode = timer.mode;
     document.body.classList.toggle('running', timer.running);
     applyImmersion();
-    el.modeLabel.textContent = timer.running ? MODE_NAMES[timer.mode] : (timer.remaining === timer.total ? `Ready · ${MODE_NAMES[timer.mode]}` : 'Paused');
-    el.startLabel.textContent = timer.running ? 'Pause' : timer.remaining === timer.total ? 'Start' : 'Resume';
-    el.start.setAttribute('aria-label', `${el.startLabel.textContent} timer (Space)`);
+    el.modeLabel.textContent = timer.running ? MODE_NAMES[timer.mode] : (timer.remaining === timer.total ? FP.t('Ready · {mode}', { mode: MODE_NAMES[timer.mode] }) : FP.t('Paused'));
+    el.startLabel.textContent = FP.t(timer.running ? 'Pause' : timer.remaining === timer.total ? 'Start' : 'Resume');
+    el.start.setAttribute('aria-label', FP.t('{label} timer (Space)', { label: el.startLabel.textContent }));
     el.miniMode.textContent = timer.running ? MODE_NAMES[timer.mode] : el.modeLabel.textContent;
-    el.miniPlay.setAttribute('aria-label', `${el.startLabel.textContent} timer`);
+    el.miniPlay.setAttribute('aria-label', FP.t('{label} timer', { label: el.startLabel.textContent }));
     $$('.mode-tabs button').forEach((b) => {
       const on = b.dataset.mode === timer.mode;
       b.classList.toggle('active', on);
@@ -373,7 +378,7 @@
         d.className = 'dot' + (i < done ? ' done' : '');
         el.dots.appendChild(d);
       }
-      el.dots.setAttribute('aria-label', `${done} of ${every} sessions before a long break`);
+      el.dots.setAttribute('aria-label', FP.t('{done} of {every} sessions before a long break', { done, every }));
     } else {
       el.dots.textContent = `Session ${today().sessions + (timer.mode === 'focus' ? 1 : 0)} today`;
     }
@@ -382,7 +387,8 @@
 
   function renderStats() {
     const s = today();
-    el.todayStats.textContent = `${s.sessions} session${s.sessions === 1 ? '' : 's'} · ${s.minutes} min today`;
+    el.todayStats.textContent = FP.t('{n} sessions · {m} min today', { n: s.sessions, m: s.minutes },
+      `${s.sessions} session${s.sessions === 1 ? '' : 's'} · ${s.minutes} min today`);
   }
 
   let tipIndex = {};
@@ -886,9 +892,9 @@
       const b = document.createElement('button');
       b.className = 'tech' + (settings.technique === id ? ' active' : '');
       b.setAttribute('aria-pressed', settings.technique === id);
-      const longNote = v.every ? ` · ${v.long}′ every ${v.every}` : '';
+      const longNote = v.every ? ` · ${FP.t('{l}′ every {e}', { l: v.long, e: v.every })}` : '';
       b.innerHTML = `
-        <div class="tech-top"><span class="tech-name">${t.name}</span><span class="tech-badge">${v.focus}′ / ${v.short}′${longNote}</span></div>
+        <div class="tech-top"><span class="tech-name">${t.name}</span><span class="tech-badge"><bdi dir="ltr">${v.focus}′ / ${v.short}′</bdi>${longNote}</span></div>
         <p class="tech-blurb">${t.blurb}</p>
         <div class="tech-best"><b>Best for:</b> ${t.best}</div>`;
       b.addEventListener('click', () => selectTechnique(id));
@@ -905,7 +911,7 @@
     renderTechniques();
     timer.cycle = 0;
     setMode('focus');
-    toast(`${TECHNIQUES[id].name}: ${tech().focus} min focus · ${tech().short} min break`);
+    toast(FP.t('{name}: {f} min focus · {s} min break', { name: TECHNIQUES[id].name, f: tech().focus, s: tech().short, fd: FP.dur(tech().focus), sd: FP.dur(tech().short) }));
   }
 
   $$('[data-custom]').forEach((input) => {
@@ -967,7 +973,7 @@
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = t.done;
-      cb.setAttribute('aria-label', `Mark “${t.text}” done`);
+      cb.setAttribute('aria-label', FP.t('Mark “{x}” done', { x: t.text }));
       cb.addEventListener('change', () => {
         t.done = cb.checked;
         if (t.done && t.id === currentTaskId) {
@@ -988,7 +994,7 @@
       const focusBtn = document.createElement('button');
       focusBtn.innerHTML = ICON_TARGET;
       focusBtn.title = 'Focus on this';
-      focusBtn.setAttribute('aria-label', `Focus on “${t.text}”`);
+      focusBtn.setAttribute('aria-label', FP.t('Focus on “{x}”', { x: t.text }));
       focusBtn.addEventListener('click', () => {
         currentTaskId = t.id;
         t.done = false;
@@ -1001,7 +1007,7 @@
       const del = document.createElement('button');
       del.innerHTML = ICON_X;
       del.title = 'Remove';
-      del.setAttribute('aria-label', `Remove “${t.text}”`);
+      del.setAttribute('aria-label', FP.t('Remove “{x}”', { x: t.text }));
       del.addEventListener('click', () => {
         tasks = tasks.filter((x) => x.id !== t.id);
         if (currentTaskId === t.id) currentTaskId = null;
@@ -1048,6 +1054,17 @@
       el.intention.blur();
       if (!timer.running) start();
     }
+  });
+
+  // ---------- Language ----------
+  // Switching reloads the page in the other language; the timer is saved first.
+  const otherLang = FP.lang === 'ar' ? 'en' : 'ar';
+  $('#mapLang').textContent = otherLang === 'ar' ? 'عربي' : 'English';
+  $('#mapLang').lang = otherLang;
+  $('#mapLang').addEventListener('click', () => { saveTimer(); FP.setLang(otherLang); });
+  $$('.lang-switch button').forEach((b) => {
+    b.setAttribute('aria-pressed', b.dataset.lang === FP.lang);
+    b.addEventListener('click', () => { if (b.dataset.lang !== FP.lang) { saveTimer(); FP.setLang(b.dataset.lang); } });
   });
 
   // ---------- Buy us a karak (Ko-fi) ----------

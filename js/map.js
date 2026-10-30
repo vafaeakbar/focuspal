@@ -552,11 +552,12 @@
       g.classList.toggle('locked', info.locked);
       g.querySelector('.landmark').setAttribute('filter', info.locked ? 'url(#liftLocked)' : 'url(#lift)');
       g.setAttribute('aria-label', info.locked
-        ? `${env.name}, locked: ${info.remaining} more focus session${info.remaining === 1 ? '' : 's'} to unlock`
-        : `Travel to ${env.name}: ${env.tagline}`);
+        ? FP.t('{name}, locked: {r} more focus sessions to unlock', { name: env.name, r: info.remaining },
+          `${env.name}, locked: ${info.remaining} more focus session${info.remaining === 1 ? '' : 's'} to unlock`)
+        : FP.t('Travel to {name}: {tagline}', { name: env.name, tagline: env.tagline }));
       if (info.locked) {
         const text = g.querySelector('.loc-lock-pill text');
-        text.textContent = `🔒 ${info.remaining} more session${info.remaining === 1 ? '' : 's'}`;
+        text.textContent = FP.t('🔒 {r} more sessions', { r: info.remaining }, `🔒 ${info.remaining} more session${info.remaining === 1 ? '' : 's'}`);
         const w = (text.getComputedTextLength ? text.getComputedTextLength() : 110) + 30;
         const rect = g.querySelector('.loc-lock-pill rect');
         rect.setAttribute('x', -w / 2);
@@ -569,16 +570,17 @@
     document.getElementById('mapPremiumBtn').hidden = p.premium || !p.next;
     bar.parentElement.hidden = p.allOpen;
     if (p.allOpen) {
-      txt.textContent = `🏝️ ${p.total} places to explore`;
+      txt.textContent = FP.t('🏝️ {n} places to explore', { n: p.total });
     } else if (p.premium) {
-      txt.textContent = `✨ Premium · all ${p.total} places open`;
+      txt.textContent = FP.t('✨ Premium · all {n} places open', { n: p.total });
       bar.style.width = '100%';
     } else if (!p.next) {
-      txt.textContent = `🏆 All ${p.total} places unlocked!`;
+      txt.textContent = FP.t('🏆 All {n} places unlocked!', { n: p.total });
       bar.style.width = '100%';
     } else {
       const n = p.next;
-      txt.textContent = `🏝️ ${p.unlocked}/${p.total} places · next: ${n.env.emoji} ${n.env.name} in ${n.remaining} session${n.remaining === 1 ? '' : 's'}`;
+      txt.textContent = FP.t('🏝️ {u}/{n} places · next: {next} in {r} sessions', { u: p.unlocked, n: p.total, next: `${n.env.emoji} ${n.env.name}`, r: n.remaining },
+        `🏝️ ${p.unlocked}/${p.total} places · next: ${n.env.emoji} ${n.env.name} in ${n.remaining} session${n.remaining === 1 ? '' : 's'}`);
       bar.style.width = `${Math.round(Math.min(1, p.done / n.env.unlock) * 100)}%`;
     }
     if (previewId) showCard(previewId);
@@ -591,7 +593,7 @@
     el.cardLock.hidden = !info.locked;
     el.cardGo.classList.toggle('premium', info.locked);
     if (info.locked) {
-      el.cardLockText.innerHTML = `🔒 Unlocks after <b>${env.unlock} focus sessions</b>. You’ve done ${info.done}, so ${info.remaining} to go.`;
+      el.cardLockText.innerHTML = FP.t('🔒 Unlocks after <b>{n} focus sessions</b>. You’ve done {d}, so {r} to go.', { n: env.unlock, d: info.done, r: info.remaining });
       el.cardLockBar.style.width = `${Math.round(Math.min(1, info.done / env.unlock) * 100)}%`;
     }
     el.card.style.setProperty('--loc', env.accent);
@@ -615,7 +617,7 @@
         el.cardDedication.appendChild(ar);
       }
     }
-    el.cardGo.textContent = info.locked ? '✨ Unlock every place with Premium' : here ? `Back to ${env.name} →` : `Focus here →`;
+    el.cardGo.textContent = info.locked ? FP.t('✨ Unlock every place with Premium') : here ? FP.t('Back to {name} →', { name: env.name }) : FP.t('Focus here →');
     el.cardGo.dataset.env = id;
     placeCard(id);
     el.card.classList.add('show');

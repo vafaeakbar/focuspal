@@ -52,7 +52,7 @@
     LENGTHS.forEach((m) => {
       const b = document.createElement('button');
       b.className = 'chip-btn';
-      b.textContent = `${m} min`;
+      b.textContent = FP.t('{m} min', { m });
       b.setAttribute('aria-pressed', m === prefs.minutes);
       b.addEventListener('click', () => { prefs.minutes = m; savePrefs(); renderSetup(); });
       el.lengths.appendChild(b);
@@ -147,7 +147,8 @@
     const mins = Math.round(session.total / 60);
     stop();
     if (prefs.bell) FP.audio.bell('done');
-    el.doneText.textContent = `You breathed slowly for ${mins} minute${mins === 1 ? '' : 's'}. Notice how you feel before you go back.`;
+    el.doneText.textContent = FP.t('You breathed slowly for {mins} minutes. Notice how you feel before you go back.', { mins, dur: FP.dur(mins) },
+      `You breathed slowly for ${mins} minute${mins === 1 ? '' : 's'}. Notice how you feel before you go back.`);
     show('done');
     el.doneBtn.focus({ preventScroll: true });
     emit('done');

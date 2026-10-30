@@ -3781,12 +3781,23 @@
         roundRect(c, sign.x, sign.y, sign.w, sign.h, 6);
         c.fill();
         c.fillStyle = stopping ? '#ff8a3d' : '#ffb84d';
-        c.font = '600 14px "JetBrains Mono", ui-monospace, monospace';
-        c.textAlign = 'left';
-        c.fillText(stopping ? `Stopping · ${name}` : `Next stop · ${name}`, sign.x + 12, sign.y + 22, sign.w - 48);
+        const label = FP.t(stopping ? 'Stopping · {stop}' : 'Next stop · {stop}', { stop: FP.t(name) }, stopping ? `Stopping · ${name}` : `Next stop · ${name}`);
+        // in Arabic the sign reads right to left, with the turn arrow on its left end
+        const rtl = FP.lang === 'ar';
+        if (rtl) {
+          c.font = '600 15px "IBM Plex Sans Arabic", "Noto Kufi Arabic", sans-serif';
+          c.direction = 'rtl';
+          c.textAlign = 'right';
+          c.fillText(label, sign.x + sign.w - 12, sign.y + 22, sign.w - 48);
+          c.direction = 'ltr';
+        } else {
+          c.font = '600 14px "JetBrains Mono", ui-monospace, monospace';
+          c.textAlign = 'left';
+          c.fillText(label, sign.x + 12, sign.y + 22, sign.w - 48);
+        }
         // the turn signal, blinking in time with its click
         if (r.signal) {
-          const ax = sign.x + sign.w - 22, ay = sign.y + sign.h / 2, d = r.signal === 'left' ? -1 : 1;
+          const ax = rtl ? sign.x + 22 : sign.x + sign.w - 22, ay = sign.y + sign.h / 2, d = r.signal === 'left' ? -1 : 1;
           c.fillStyle = r.blink ? '#4fe08a' : 'rgba(79,224,138,0.15)';
           c.beginPath();
           c.moveTo(ax + d * 9, ay);

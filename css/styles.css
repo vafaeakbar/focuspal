@@ -352,9 +352,16 @@ body.zen { cursor: none; }
 .breathe-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
 .breathe-actions .btn { min-width: 120px; margin: 0; }
 .breathe-done-icon { font-size: 48px; margin-bottom: 8px; }
+/* Small phones: four controls (sound, reset, start, skip) must fit inside the card. */
+@media (max-width: 480px) {
+  .focus-card { padding-left: 18px; padding-right: 18px; }
+  .controls { gap: 10px; }
+  .ctrl { width: 44px; height: 44px; }
+  .ctrl.primary { min-width: 118px; height: 54px; padding: 0 20px; }
+}
 @media (max-width: 480px) {
   .breathe-patterns { grid-template-columns: 1fr; }
-  .breathe-pattern { grid-template-columns: auto 1fr; text-align: left; align-items: baseline; gap: 10px; }
+  .breathe-pattern { grid-template-columns: auto 1fr; text-align: start; align-items: baseline; gap: 10px; }
 }
 
 /* Offered when a newer version of FocusPal has been published. */
@@ -644,6 +651,28 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 .dua-title { font-weight: 700; margin-bottom: 2px !important; }
 
 /* Product sign-off: Alajeer symbol + "by Alajeer", Arabic on its own line (brand book). */
+/* Language switch: a chip on the map and a pair of buttons in Settings. */
+.lang-switch { display: flex; gap: 8px; margin: 6px 0 4px; }
+.lang-switch button {
+  flex: 1; padding: 10px 12px; border-radius: 12px; cursor: pointer; color: var(--text);
+  border: 1px solid var(--line); background: rgba(255,255,255,.05); font: 600 14px Inter, sans-serif;
+}
+.lang-switch button[lang="ar"] { font-family: 'IBM Plex Sans Arabic', 'Noto Kufi Arabic', sans-serif; }
+.lang-switch button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.lang-chip[lang="ar"] { font-family: 'IBM Plex Sans Arabic', 'Noto Kufi Arabic', sans-serif; font-size: 14.5px; }
+
+/* ---------- Arabic interface (right to left) ---------- */
+/* Arabic letters join, so letter-spacing would break words apart. */
+html[lang="ar"] body, html[lang="ar"] body * {
+  font-family: 'IBM Plex Sans Arabic', 'Noto Kufi Arabic', Inter, system-ui, sans-serif !important;
+  letter-spacing: 0 !important;
+}
+html[lang="ar"] [lang="en"] { font-family: Inter, system-ui, sans-serif !important; }
+/* Sliders keep filling left to right, matching their volume fill. */
+html[lang="ar"] input[type="range"] { direction: ltr; }
+/* The prayer line is already shown in Arabic, so its separate Arabic copy is hidden. */
+html[lang="ar"] .dua-ar { display: none; }
+
 /* "Buy us a karak": a gentle Ko-fi link on the map, in the panel and now and then on a break. */
 .karak-chip {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;

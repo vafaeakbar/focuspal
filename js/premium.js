@@ -48,7 +48,9 @@
       el.cta.textContent = 'Back to focusing';
       el.cta.disabled = false;
     } else if (url) {
-      el.cta.textContent = `Continue to checkout · ${plan === 'yearly' ? cfg.priceYearly + ' / year' : cfg.priceMonthly + ' / month'}`;
+      el.cta.textContent = plan === 'yearly'
+        ? FP.t('Continue to checkout · {price} / year', { price: cfg.priceYearly })
+        : FP.t('Continue to checkout · {price} / month', { price: cfg.priceMonthly });
       el.cta.disabled = false;
     } else {
       el.cta.textContent = 'Coming soon';
